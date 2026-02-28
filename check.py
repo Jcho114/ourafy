@@ -21,7 +21,7 @@ def get_tokens() -> dict:
 TOKENS = get_tokens()
 
 # GLOBAL header and parameter for GET requests
-HEADERS = {"Authorization": f"Bearer {TOKENS['oura_access_token']}"}
+HEADERS = {"Authorization": f"Bearer {TOKENS["access_token"]}"}
 PARAMS = {"start_date": f"{today}", "end_date": f"{today}"}
 
 
@@ -170,6 +170,7 @@ def extract_stress(metrics):
 
 def main():
 
+    write_user_data()
     metrics = return_data()
     print(extract_sleep(metrics))
     pass

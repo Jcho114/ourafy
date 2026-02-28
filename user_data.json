@@ -1,14 +1,62 @@
 {
     "readiness": {
-        "message": "No access token header found"
+        "data": [
+            {
+                "id": "f66a75f6-fab6-47c3-b91d-248a2a50daf7",
+                "contributors": {
+                    "activity_balance": 68,
+                    "body_temperature": 92,
+                    "hrv_balance": 91,
+                    "previous_day_activity": null,
+                    "previous_night": 69,
+                    "recovery_index": 23,
+                    "resting_heart_rate": 100,
+                    "sleep_balance": 73,
+                    "sleep_regularity": 90
+                },
+                "day": "2026-02-28",
+                "score": 76,
+                "temperature_deviation": -0.38,
+                "temperature_trend_deviation": -0.18,
+                "timestamp": "2026-02-28T00:00:00.000+00:00"
+            }
+        ],
+        "next_token": null
     },
     "resilience": {
-        "message": "No access token header found"
+        "data": [],
+        "next_token": null
     },
     "sleep": {
-        "message": "No access token header found"
+        "data": [
+            {
+                "id": "40e9cf07-9402-4318-a19b-d90523af5e1e",
+                "contributors": {
+                    "deep_sleep": 95,
+                    "efficiency": 90,
+                    "latency": 67,
+                    "rem_sleep": 47,
+                    "restfulness": 86,
+                    "timing": 100,
+                    "total_sleep": 59
+                },
+                "day": "2026-02-28",
+                "score": 74,
+                "timestamp": "2026-02-28T00:00:00.000+00:00"
+            }
+        ],
+        "next_token": null
     },
     "stress": {
-        "message": "No access token header found"
+        "data": [
+            {
+                "id": "c9491d00-06da-4a08-9ce7-51474545e8f4",
+                "day": "2026-02-28",
+                "day_summary": "stressful",
+                "recovery_high": 0,
+                "stress_high": 12600
+            }
+        ],
+        "next_token": null
     }
 }
