@@ -10,22 +10,20 @@ load_dotenv()
 today = date.today()
 # yesterday = today - timedelta(days=1)
 
+
 def get_tokens() -> dict:
-    with open('tokens.json', 'r') as file:
+    with open("tokens.json", "r") as file:
         tokens = json.load(file)
 
     return tokens
 
+
 TOKENS = get_tokens()
 
 # GLOBAL header and parameter for GET requests
-HEADERS = {
-    "Authorization": f"Bearer {TOKENS['access_token']}"
-}
-PARAMS = {
-    "start_date": f"{today}",
-    "end_date": f"{today}"
-}
+HEADERS = {"Authorization": f"Bearer {TOKENS['oura_access_token']}"}
+PARAMS = {"start_date": f"{today}", "end_date": f"{today}"}
+
 
 def refresh_tokens(refresh_token):
     try:
@@ -34,107 +32,111 @@ def refresh_tokens(refresh_token):
             "grant_type": "refresh_token",
             "refresh_token": refresh_token,
             "client_id": os.getenv("CLIENT_ID"),
-            "client_secret": os.getenv("CLIENT_SECRET")
+            "client_secret": os.getenv("CLIENT_SECRET"),
         }
         response = requests.post(token_url, data=token_data)
         new_tokens = response.json()
 
-        with open('tokens.json', 'w') as file:
+        with open("tokens.json", "w") as file:
             json.dumps(new_tokens, file, indent=4)
 
-        print('tokens refresed.')
+        print("tokens refresed.")
         return True
-    
+
     except Exception as e:
         print(e)
         return False
-    
+
+
 def write_user_data():
     data = {
         "readiness": get_readiness(),
         "resilience": get_resilience(),
         "sleep": get_sleep(),
-        "stress": get_stress()
+        "stress": get_stress(),
     }
 
     with open("user_data.json", "w") as file:
         json.dump(data, file, indent=4)
 
+
 def get_readiness() -> dict:
 
     try:
-        url = 'https://api.ouraring.com/v2/usercollection/daily_readiness' 
+        url = "https://api.ouraring.com/v2/usercollection/daily_readiness"
 
         response = requests.get(url=url, headers=HEADERS, params=PARAMS)
-        
+
         # returning data in json format
         return response.json()
     except:
         if response.status_code == 401:
-            refresh_tokens()
+            refresh_tokens(TOKENS["oura_refresh_token"])
             get_readiness()
 
 
 def get_resilience() -> dict:
     try:
-        url = 'https://api.ouraring.com/v2/usercollection/daily_resilience' 
+        url = "https://api.ouraring.com/v2/usercollection/daily_resilience"
 
         response = requests.get(url=url, headers=HEADERS, params=PARAMS)
-        
+
         # returning data in json format
         return response.json()
     except:
         if response.status_code == 401:
-            refresh_tokens()
+            refresh_tokens(TOKENS["oura_refresh_token"])
             get_resilience()
+
 
 def get_sleep() -> dict:
     try:
-        url = 'https://api.ouraring.com/v2/usercollection/daily_sleep' 
-
+        url = "https://api.ouraring.com/v2/usercollection/daily_sleep"
 
         response = requests.get(url=url, headers=HEADERS, params=PARAMS)
-        
+
         # returning data in json format
         return response.json()
     except:
         if response.status_code == 401:
-            refresh_tokens()
+            refresh_tokens(TOKENS["oura_refresh_token"])
             get_sleep()
+
 
 def get_stress() -> dict:
     try:
-        url = 'https://api.ouraring.com/v2/usercollection/daily_stress' 
+        url = "https://api.ouraring.com/v2/usercollection/daily_stress"
 
         response = requests.get(url=url, headers=HEADERS, params=PARAMS)
-        
+
         # returning data in json format
         return response.json()
     except:
         if response.status_code == 401:
-            refresh_tokens()
-            get_stress() 
+            refresh_tokens(TOKENS["oura_refresh_token"])
+            get_stress()
+
 
 def return_data() -> dict:
-    with open('user_data.json', 'r') as file:
+    with open("user_data.json", "r") as file:
         metrics = json.load(file)
     return metrics
 
+
 def extract_readiness(metrics):
 
-    
-    score = metrics['readiness']['data'][0]['score']
-    c = metrics['readiness']['data'][0]['contributors']
+    score = metrics["readiness"]["data"][0]["score"]
+    c = metrics["readiness"]["data"][0]["contributors"]
 
     return {
-        'score': score,
-        'activity_balance': c["activity_balance"],
-        'body_temperature': c["body_temperature"],
-        'hrv_balance': c["hrv_balance"],
-        'recovery_index': c["recovery_index"],
-        'resting_heart_rate': c["resting_heart_rate"],
-        'sleep_balance': c["sleep_balance"],
-        'sleep_regularity': c["sleep_regularity"]
+        "score": score,
+        "activity_balance": c["activity_balance"],
+        "body_temperature": c["body_temperature"],
+        "hrv_balance": c["hrv_balance"],
+        "recovery_index": c["recovery_index"],
+        "resting_heart_rate": c["resting_heart_rate"],
+        "sleep_balance": c["sleep_balance"],
+        "sleep_regularity": c["sleep_regularity"],
     }
 
 
@@ -150,9 +152,10 @@ def extract_sleep(metrics):
         "rem_sleep": c["rem_sleep"],
         "restfulness": c["restfulness"],
         "timing": c["timing"],
-        "total_sleep": c["total_sleep"]
+        "total_sleep": c["total_sleep"],
         # "day": sleep_data["day"]
     }
+
 
 def extract_stress(metrics):
     stress_data = metrics["stress"]["data"][0]
@@ -160,14 +163,16 @@ def extract_stress(metrics):
     return {
         # "day": stress_data["day"],
         "day_summary": stress_data["day_summary"],
-        "stress_high": stress_data["stress_high"]
+        "stress_high": stress_data["stress_high"],
     }
+
 
 def main():
 
     metrics = return_data()
     print(extract_sleep(metrics))
     pass
+
 
 if __name__ == "__main__":
     main()

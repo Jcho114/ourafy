@@ -3,7 +3,13 @@ import subprocess
 import json
 import logging
 from dotenv import load_dotenv
-from check import extract_readiness, extract_sleep, extract_stress, write_user_data, return_data
+from check import (
+    extract_readiness,
+    extract_sleep,
+    extract_stress,
+    write_user_data,
+    return_data,
+)
 
 load_dotenv()
 
@@ -28,18 +34,9 @@ sleep = extract_sleep(metrics)
 stress = extract_stress(metrics)
 
 
-SESSION_INPUT = {
+STATIC_RULES = {
     "allowed_apps": ["VSCode", "Notion", "Slack", "Figma", "Chrome"],
-    "oura_data": {
-        # "stress_level": 72, # oura has no numerical stress level, only 'daily summary'
-        "stress_summary": stress['day_summary'], # ex. 'stressful'
-        "readiness_score": readiness['score'],
-        'resting_heart_rate': readiness['resting_heart_rate'],
-        "hrv": readiness['hrv_balance'],
-        "sleep_score": sleep['score'],
-    },
     "constraints": {"min_on": 25, "max_on": 60, "min_off": 5, "max_off": 10},
-    "context": {"time_of_day": "morning"},
 }
 
 JSON_STRUCTURE = {
@@ -65,7 +62,7 @@ Your job is to decide:
 ## Locked Rules In JSON (DO NOT IGNORE)
 
 ```json
-{json.dumps(SESSION_INPUT)}
+{json.dumps(STATIC_RULES)}
 ```
 
 ---
@@ -96,12 +93,20 @@ Return ONLY valid JSON in this exact structure:
 """
 
 
-def get_focus_config(user_text: str) -> dict:
+def get_focus_config(user_text: str, oura_data: dict) -> dict:
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_text},
+            {
+                "role": "user",
+                "content": json.dumps(
+                    {
+                        "user_text": user_text,
+                        "oura_data": oura_data,
+                    }
+                ),
+            },
         ],
         response_format={
             "type": "json_schema",
@@ -155,7 +160,14 @@ def main():
     voice_text = (
         "I want to focus on coding a new feature, and occasionally check Notion."
     )
-    focus_config = get_focus_config(voice_text)
+    oura_data = {
+        "stress_summary": stress["day_summary"],
+        "readiness_score": readiness["score"],
+        "resting_heart_rate": readiness["resting_heart_rate"],
+        "hrv": readiness["hrv_balance"],
+        "sleep_score": sleep["score"],
+    }
+    focus_config = get_focus_config(voice_text, oura_data)
     print(json.dumps(focus_config, indent=2))
 
     enact_on_config(focus_config)

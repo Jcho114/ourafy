@@ -39,16 +39,17 @@ def callback():
     token_data = {
         "grant_type": "authorization_code",
         "code": code,
-        "redirect_url": REDIRECT_URI,
+        "redirect_uri": REDIRECT_URI,
         "client_id": SPOTIFY_CLIENT_ID,
         "client_secret": SPOTIFY_CLIENT_SECRET,
     }
     response = requests.post(TOKEN_URL, data=token_data)
     token_info = response.json()
+    print(token_info)
     access_token = token_info.get("access_token")
     if not access_token:
         return "Access token invalid"
-    return
+    return access_token
 
 
 def run_porcupine_listener():
@@ -71,6 +72,6 @@ def run_porcupine_listener():
 
 
 if __name__ == "__main__":
-    listener_thread = threading.Thread(target=run_porcupine_listener, daemon=True)
-    listener_thread.start()
+    # listener_thread = threading.Thread(target=run_porcupine_listener, daemon=True)
+    # listener_thread.start()
     app.run(port=5000)
