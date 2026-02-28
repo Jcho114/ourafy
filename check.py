@@ -167,13 +167,20 @@ def extract_stress(metrics):
         "stress_high": stress_data["stress_high"],
     }
 
+def get_bio_snapshot():
+    
+    write_user_data()
+    metrics = return_data()
+
+    readiness = extract_readiness(metrics)
+    sleep = extract_sleep(metrics)
+    stress = extract_stress(metrics)
+
+    return {**readiness, **sleep, **stress}
 
 def main():
 
-    write_user_data()
-    metrics = return_data()
-    print(extract_sleep(metrics))
-    pass
+    print(json.dumps(get_bio_snapshot(), indent=4))
 
 
 if __name__ == "__main__":

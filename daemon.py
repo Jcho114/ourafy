@@ -8,6 +8,7 @@ from pvrecorder import PvRecorder
 import webbrowser
 import json
 from urllib.parse import urlencode
+from check import get_bio_snapshot
 
 """
 File for the wakeword daemon as well as refreshing auth tokens for Oura and Spotify
@@ -102,6 +103,11 @@ def oura_callback():
         return f"Authorization Code Received: {auth_code}. You can close this tab and return to your IDE."
     else:
         return "No code found in the URL.", 400
+    
+@app.route("oura/data")
+def oura_data():
+    oura_data = get_bio_snapshot()
+    return oura_data
 
 
 def run_porcupine_listener():
