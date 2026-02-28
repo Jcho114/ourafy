@@ -2,6 +2,10 @@ from openai import OpenAI
 import subprocess
 import json
 import logging
+from dotenv import load_dotenv
+from check import extract_readiness, extract_sleep, extract_stress, write_user_data, return_data
+
+load_dotenv()
 
 logger = logging.getLogger("focus_logger")
 logger.setLevel(logging.INFO)
@@ -15,13 +19,24 @@ if not logger.handlers:
 
 client = OpenAI()
 
+# updates user data to todays date and writes it to a json file called "user_data.json"
+write_user_data()
+metrics = return_data()
+
+readiness = extract_readiness(metrics)
+sleep = extract_sleep(metrics)
+stress = extract_stress(metrics)
+
+
 SESSION_INPUT = {
     "allowed_apps": ["VSCode", "Notion", "Slack", "Figma", "Chrome"],
     "oura_data": {
-        "stress_level": 72,
-        "readiness_score": 80,
-        "hrv": 45,
-        "sleep_score": 78,
+        # "stress_level": 72, # oura has no numerical stress level, only 'daily summary'
+        "stress_summary": stress['day_summary'], # ex. 'stressful'
+        "readiness_score": readiness['score'],
+        'resting_heart_rate': readiness['resting_heart_rate'],
+        "hrv": readiness['hrv_balance'],
+        "sleep_score": sleep['score'],
     },
     "constraints": {"min_on": 25, "max_on": 60, "min_off": 5, "max_off": 10},
     "context": {"time_of_day": "morning"},
