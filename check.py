@@ -26,6 +26,7 @@ PARAMS = {"start_date": f"{today}", "end_date": f"{today}"}
 
 
 def refresh_tokens(refresh_token):
+    refresh_token = TOKENS["refresh_token"]
     try:
         token_url = "https://api.ouraring.com/oauth/token"
         token_data = {

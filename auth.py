@@ -83,6 +83,9 @@ def get_tokens() -> dict:
 
 
 def refresh_tokens(refresh_token):
+
+    tokens = get_tokens()
+    refresh_token = tokens["refresh_token"]
     try:
         token_url = "https://api.ouraring.com/oauth/token"
         token_data = {

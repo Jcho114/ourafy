@@ -24,11 +24,7 @@ ACCESS_KEY = os.getenv("ACCESS_KEY")
 
 
 @app.route("/")
-<<<<<<< HEAD
-def index():
-=======
 def index(): 
->>>>>>> bcd8a71 (chore: wakeword recognition complete)
     if not SPOTIFY_CLIENT_ID or not SPOTIFY_CLIENT_SECRET:
         print("Client ID or secret not found. Did you edit .env?")
         return
@@ -57,16 +53,11 @@ def callback():
 
 
 def run_porcupine_listener():
-<<<<<<< HEAD
-    porcupine = pvporcupine.create(access_key=ACCESS_KEY, keywords=["bumblebee"])
-    recorder = PvRecorder(frame_length=porcupine.frame.length)
-=======
     porcupine = pvporcupine.create(
         access_key=ACCESS_KEY, 
         keywords=['bumblebee'] 
     )
     recorder = PvRecorder(frame_length=porcupine.frame_length)
->>>>>>> bcd8a71 (chore: wakeword recognition complete)
     recorder.start()
 
     try:
@@ -74,11 +65,7 @@ def run_porcupine_listener():
             audio_frame = recorder.read()
             keyword_index = porcupine.process(audio_frame)
             if keyword_index == 0:
-<<<<<<< HEAD
-                pass  # detected `bumblebee' activation word ->
-=======
                 print("Keyword heard") # WORKS
->>>>>>> bcd8a71 (chore: wakeword recognition complete)
     except Exception as e:
         print(f"Error: {e}")
     finally:
