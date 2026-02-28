@@ -13,14 +13,19 @@ DISTRACTIONS_LIST = [
     "Zoom.us",
     "Spotify",
     "Background Music",
-    "Helium",
+    "Helium"
+]
+
+PRODUCTIVE_APP_LIST = [
     "Google Chrome",
     "Firefox",
     "Safari",
+    "VSCode",
+    "Obsidian",
+    "Notion"
 ]
 
-
-def kill_running_distractions():
+def kill_running_processes(list):
     try:
         output = subprocess.check_output(["ps", "-ax", "-o", "pid,command"]).decode(
             "utf-8"
@@ -34,7 +39,7 @@ def kill_running_distractions():
             pid = int(parts[0])
             cmd = parts[1]
 
-            for app in DISTRACTIONS_LIST:
+            for app in list:
                 if app in cmd:
                     print(f"Found distraction '{app}' running (PID {pid}). Killing...")
                     try:
@@ -48,5 +53,4 @@ def kill_running_distractions():
     except ValueError as e:
         print(f"Error parsing process info: {e}")
 
-
-kill_running_distractions()
+kill_running_processes(DISTRACTIONS_LIST)
