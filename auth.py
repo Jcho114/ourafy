@@ -22,7 +22,7 @@ def run_background():
         "client_id": client_id,
         "redirect_uri": redirect_uri,
         "response_type": "code",
-        "scope": "daily heartrate personal"
+        "scope": "daily heartrate personal stress resilience"
     }
 
     auth_url = f"https://cloud.ouraring.com/oauth/authorize?{urlencode(auth_params)}"
