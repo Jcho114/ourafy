@@ -104,7 +104,7 @@ def oura_callback():
     else:
         return "No code found in the URL.", 400
     
-@app.route("oura/data")
+@app.route("/oura/data")
 def oura_data():
     oura_data = get_bio_snapshot()
     return oura_data
