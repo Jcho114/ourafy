@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from pvrecorder import PvRecorder
 import webbrowser
 import json
+from urllib.parse import urlencode
 
 """
 File for the wakeword daemon as well as refreshing auth tokens for Oura and Spotify
@@ -27,7 +28,7 @@ ACCESS_KEY = os.getenv("ACCESS_KEY")
 # oauth2 application credentials
 OURA_CLIENT_ID = os.getenv("CLIENT_ID")
 OURA_CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-OURA_REDIRECT_URI = "http://localhost:5500/callback"
+OURA_REDIRECT_URI = "http://localhost:5000/callback"
 
 def run_background():
     # authorization page
