@@ -39,10 +39,13 @@ STATIC_RULES = {
     "constraints": {"min_on": 25, "max_on": 60, "min_off": 5, "max_off": 10},
 }
 
-JSON_STRUCTURE = {
-    "apps_to_open": ["app_name_1", "app_name_2"],
-    "pomodoro": {"minutes_on": "X", "minutes_off": "Y", "cycles": "Z"},
-}
+JSON_STRUCTURE = [
+    {
+        "apps_to_open": ["app_name_1", "app_name_2"],
+        "pomodoro": {"minutes_on": "X", "minutes_off": "Y", "cycles": "Z"},
+        "reason": "reason for this plan",
+    }
+]
 
 SYSTEM_PROMPT = f"""
 # Focus Session Optimization Engine – System Prompt
@@ -93,7 +96,7 @@ Return ONLY valid JSON in this exact structure:
 """
 
 
-def get_focus_config(user_text: str, oura_data: dict) -> dict:
+def get_focus_configs(user_text: str, oura_data: dict) -> dict:
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -167,10 +170,10 @@ def main():
         "hrv": readiness["hrv_balance"],
         "sleep_score": sleep["score"],
     }
-    focus_config = get_focus_config(voice_text, oura_data)
-    print(json.dumps(focus_config, indent=2))
+    focus_configs = get_focus_configs(voice_text, oura_data)
+    print(json.dumps(focus_configs, indent=2))
 
-    enact_on_config(focus_config)
+    enact_on_config(focus_configs[0])
 
 
 if __name__ == "__main__":
