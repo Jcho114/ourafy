@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-
 import { StepRail } from "@/components/lockin/StepRail";
 
 const MAX_FOCUS_CHARS = 150;
@@ -27,7 +26,9 @@ function readQueryFocus(search: string) {
 export default function LockIn() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [focus, setFocus] = React.useState(() => readQueryFocus(location.search));
+  const [focus, setFocus] = React.useState(() =>
+    readQueryFocus(location.search),
+  );
   const inputRef = React.useRef<HTMLTextAreaElement | null>(null);
 
   React.useEffect(() => {
@@ -53,9 +54,21 @@ export default function LockIn() {
           className="mb-6 -mx-2"
           currentKey="intake"
           steps={[
-            { key: "intake", label: "Lock Target", sublabel: "What you're doing" },
-            { key: "snapshot", label: "Bio + Setup", sublabel: "Readiness + inputs" },
-            { key: "options", label: "Pick A Plan", sublabel: "Pomodoro choices" },
+            {
+              key: "intake",
+              label: "Lock Target",
+              sublabel: "What you're doing",
+            },
+            {
+              key: "snapshot",
+              label: "Bio + Setup",
+              sublabel: "Readiness + inputs",
+            },
+            {
+              key: "options",
+              label: "Pick A Plan",
+              sublabel: "Pomodoro choices",
+            },
             { key: "timer", label: "Timer", sublabel: "Run it" },
           ]}
         />
@@ -64,7 +77,9 @@ export default function LockIn() {
           <div className="text-xs tracking-[0.28em] text-muted-foreground">
             OURAFY / INTAKE
           </div>
-          <div className="text-2xl font-semibold">What Are You Locking In For?</div>
+          <div className="text-2xl font-semibold">
+            What Are You Locking In For?
+          </div>
           <div className="mt-2 max-w-2xl text-sm text-muted-foreground">
             Keep it concrete. One line is enough.
           </div>
@@ -84,7 +99,9 @@ export default function LockIn() {
                 ref={inputRef}
                 id="focus"
                 value={focus}
-                onChange={(e) => setFocus(e.target.value.slice(0, MAX_FOCUS_CHARS))}
+                onChange={(e) =>
+                  setFocus(e.target.value.slice(0, MAX_FOCUS_CHARS))
+                }
                 placeholder="Ship the onboarding flow"
                 wrap="soft"
                 maxLength={MAX_FOCUS_CHARS}

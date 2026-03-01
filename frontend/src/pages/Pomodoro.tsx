@@ -137,9 +137,21 @@ export default function Pomodoro() {
           className="mb-6 -mx-2"
           currentKey="timer"
           steps={[
-            { key: "intake", label: "Lock Target", sublabel: "What you're doing" },
-            { key: "snapshot", label: "Bio + Setup", sublabel: "Readiness + inputs" },
-            { key: "options", label: "Pick A Plan", sublabel: "Pomodoro choices" },
+            {
+              key: "intake",
+              label: "Lock Target",
+              sublabel: "What you're doing",
+            },
+            {
+              key: "snapshot",
+              label: "Bio + Setup",
+              sublabel: "Readiness + inputs",
+            },
+            {
+              key: "options",
+              label: "Pick A Plan",
+              sublabel: "Pomodoro choices",
+            },
             { key: "timer", label: "Timer", sublabel: "Run it" },
           ]}
         />

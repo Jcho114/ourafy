@@ -13,7 +13,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-
 import { getLockinOptions } from "@/api/lockinOptions";
 import type { LockinOption } from "@/features/lockin/types";
 import { unlockAudio } from "@/features/audio/beeps";
@@ -49,7 +48,10 @@ export default function Plan() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const params = React.useMemo(() => readParams(location.search), [location.search]);
+  const params = React.useMemo(
+    () => readParams(location.search),
+    [location.search],
+  );
 
   React.useEffect(() => {
     if (!params.focus.trim()) {
@@ -86,9 +88,21 @@ export default function Plan() {
           className="mb-6 -mx-2"
           currentKey="options"
           steps={[
-            { key: "intake", label: "Lock Target", sublabel: "What you're doing" },
-            { key: "snapshot", label: "Bio + Setup", sublabel: "Readiness + inputs" },
-            { key: "options", label: "Pick A Plan", sublabel: "Pomodoro choices" },
+            {
+              key: "intake",
+              label: "Lock Target",
+              sublabel: "What you're doing",
+            },
+            {
+              key: "snapshot",
+              label: "Bio + Setup",
+              sublabel: "Readiness + inputs",
+            },
+            {
+              key: "options",
+              label: "Pick A Plan",
+              sublabel: "Pomodoro choices",
+            },
             { key: "timer", label: "Timer", sublabel: "Run it" },
           ]}
         />
@@ -106,7 +120,9 @@ export default function Plan() {
 
           <Button
             variant="outline"
-            onClick={() => navigate(`/snapshot?focus=${encodeURIComponent(params.focus)}`)}
+            onClick={() =>
+              navigate(`/snapshot?focus=${encodeURIComponent(params.focus)}`)
+            }
             className="border-border/60 bg-background/40 backdrop-blur"
           >
             <ArrowLeft className="size-4" />
@@ -118,8 +134,12 @@ export default function Plan() {
           {query.isLoading ? (
             <Card className="border-border/60 bg-card/40 backdrop-blur">
               <CardHeader>
-                <CardTitle className="tracking-wide">Loading options…</CardTitle>
-                <CardDescription>Contacting /api/lockin-options</CardDescription>
+                <CardTitle className="tracking-wide">
+                  Loading options…
+                </CardTitle>
+                <CardDescription>
+                  Contacting /api/lockin-options
+                </CardDescription>
               </CardHeader>
             </Card>
           ) : null}
@@ -127,7 +147,9 @@ export default function Plan() {
           {query.isError ? (
             <Card className="border-border/60 bg-card/40 backdrop-blur">
               <CardHeader>
-                <CardTitle className="tracking-wide">Couldn’t load options</CardTitle>
+                <CardTitle className="tracking-wide">
+                  Couldn’t load options
+                </CardTitle>
                 <CardDescription>Using fallback options.</CardDescription>
               </CardHeader>
             </Card>
@@ -142,7 +164,8 @@ export default function Plan() {
                 <CardTitle className="flex items-center justify-between gap-3">
                   <span className="tracking-wide">{opt.id.toUpperCase()}</span>
                   <span className="rounded-md border border-border/60 bg-background/30 px-2 py-1 text-xs font-mono">
-                    {opt.pomodoro.minutes_on}/{opt.pomodoro.minutes_off} x {opt.pomodoro.cycles}
+                    {opt.pomodoro.minutes_on}/{opt.pomodoro.minutes_off} x{" "}
+                    {opt.pomodoro.cycles}
                   </span>
                 </CardTitle>
                 <CardDescription className="font-mono text-xs">
@@ -150,7 +173,9 @@ export default function Plan() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="text-sm text-muted-foreground">{opt.reason}</div>
+                <div className="text-sm text-muted-foreground">
+                  {opt.reason}
+                </div>
                 <Separator className="bg-border/60" />
                 <div className="flex justify-end">
                   <Button onClick={() => choose(opt)} className="px-6">

@@ -18,15 +18,12 @@ def get_tokens() -> dict:
     return tokens
 
 
-TOKENS = get_tokens()
-
 # GLOBAL header and parameter for GET requests
-HEADERS = {"Authorization": f"Bearer {TOKENS["access_token"]}"}
 PARAMS = {"start_date": f"{today}", "end_date": f"{today}"}
 
 
-def refresh_tokens(refresh_token):
-    refresh_token = TOKENS["refresh_token"]
+def refresh_tokens():
+    refresh_token = get_tokens["refresh_token"]
     try:
         token_url = "https://api.ouraring.com/oauth/token"
         token_data = {
@@ -47,75 +44,6 @@ def refresh_tokens(refresh_token):
     except Exception as e:
         print(e)
         return False
-
-
-def write_user_data():
-    data = {
-        "readiness": get_readiness(),
-        "resilience": get_resilience(),
-        "sleep": get_sleep(),
-        "stress": get_stress(),
-    }
-
-    with open("user_data.json", "w") as file:
-        json.dump(data, file, indent=4)
-
-
-def get_readiness() -> dict:
-
-    try:
-        url = "https://api.ouraring.com/v2/usercollection/daily_readiness"
-
-        response = requests.get(url=url, headers=HEADERS, params=PARAMS)
-
-        # returning data in json format
-        return response.json()
-    except:
-        if response.status_code == 401:
-            refresh_tokens(TOKENS["oura_refresh_token"])
-            get_readiness()
-
-
-def get_resilience() -> dict:
-    try:
-        url = "https://api.ouraring.com/v2/usercollection/daily_resilience"
-
-        response = requests.get(url=url, headers=HEADERS, params=PARAMS)
-
-        # returning data in json format
-        return response.json()
-    except:
-        if response.status_code == 401:
-            refresh_tokens(TOKENS["oura_refresh_token"])
-            get_resilience()
-
-
-def get_sleep() -> dict:
-    try:
-        url = "https://api.ouraring.com/v2/usercollection/daily_sleep"
-
-        response = requests.get(url=url, headers=HEADERS, params=PARAMS)
-
-        # returning data in json format
-        return response.json()
-    except:
-        if response.status_code == 401:
-            refresh_tokens(TOKENS["oura_refresh_token"])
-            get_sleep()
-
-
-def get_stress() -> dict:
-    try:
-        url = "https://api.ouraring.com/v2/usercollection/daily_stress"
-
-        response = requests.get(url=url, headers=HEADERS, params=PARAMS)
-
-        # returning data in json format
-        return response.json()
-    except:
-        if response.status_code == 401:
-            refresh_tokens(TOKENS["oura_refresh_token"])
-            get_stress()
 
 
 def return_data() -> dict:
@@ -167,8 +95,73 @@ def extract_stress(metrics):
         "stress_high": stress_data["stress_high"],
     }
 
-def get_bio_snapshot():
-    
+
+def get_bio_snapshot(ourafy_access_token: str, ourafy_refresh_token: str):
+    HEADERS = {"Authorization": f"Bearer {ourafy_access_token}"}
+
+    def get_readiness() -> dict:
+        try:
+            url = "https://api.ouraring.com/v2/usercollection/daily_readiness"
+
+            response = requests.get(url=url, headers=HEADERS, params=PARAMS)
+
+            # returning data in json format
+            return response.json()
+        except Exception:
+            if response.status_code == 401:
+                refresh_tokens(ourafy_refresh_token)
+                get_readiness()
+
+    def get_resilience() -> dict:
+        try:
+            url = "https://api.ouraring.com/v2/usercollection/daily_resilience"
+
+            response = requests.get(url=url, headers=HEADERS, params=PARAMS)
+
+            # returning data in json format
+            return response.json()
+        except Exception:
+            if response.status_code == 401:
+                refresh_tokens(ourafy_refresh_token)
+                get_resilience()
+
+    def get_sleep() -> dict:
+        try:
+            url = "https://api.ouraring.com/v2/usercollection/daily_sleep"
+
+            response = requests.get(url=url, headers=HEADERS, params=PARAMS)
+
+            # returning data in json format
+            return response.json()
+        except Exception:
+            if response.status_code == 401:
+                refresh_tokens(ourafy_refresh_token)
+                get_sleep()
+
+    def get_stress() -> dict:
+        try:
+            url = "https://api.ouraring.com/v2/usercollection/daily_stress"
+
+            response = requests.get(url=url, headers=HEADERS, params=PARAMS)
+
+            # returning data in json format
+            return response.json()
+        except Exception:
+            if response.status_code == 401:
+                refresh_tokens(ourafy_refresh_token)
+                get_stress()
+
+    def write_user_data():
+        data = {
+            "readiness": get_readiness(),
+            "resilience": get_resilience(),
+            "sleep": get_sleep(),
+            "stress": get_stress(),
+        }
+
+        with open("user_data.json", "w") as file:
+            json.dump(data, file, indent=4)
+
     write_user_data()
     metrics = return_data()
 
@@ -177,11 +170,3 @@ def get_bio_snapshot():
     stress = extract_stress(metrics)
 
     return {**readiness, **sleep, **stress}
-
-def main():
-
-    print(json.dumps(get_bio_snapshot(), indent=4))
-
-
-if __name__ == "__main__":
-    main()

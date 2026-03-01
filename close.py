@@ -7,13 +7,7 @@ DISTRACTIONS_LIST = [
     "Roblox",
     "Polytopia",
     "Steam",
-    "uTorrent Web",
     "Discord",
-    "Slack",
-    "Zoom.us",
-    "Spotify",
-    "Background Music",
-    "Helium"
 ]
 
 PRODUCTIVE_APP_LIST = [
@@ -22,8 +16,9 @@ PRODUCTIVE_APP_LIST = [
     "Safari",
     "VSCode",
     "Obsidian",
-    "Notion"
+    "Notion",
 ]
+
 
 def kill_running_processes(list):
     try:
@@ -52,5 +47,3 @@ def kill_running_processes(list):
         print(f"Error executing ps command: {e}")
     except ValueError as e:
         print(f"Error parsing process info: {e}")
-
-kill_running_processes(DISTRACTIONS_LIST)
