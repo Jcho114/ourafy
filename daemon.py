@@ -9,6 +9,8 @@ import json
 from urllib.parse import urlencode
 from check import get_bio_snapshot
 from close import kill_running_processes
+from scoring import compute_all_metrics
+from focus import get_focus_configs
 from flask_cors import CORS
 import subprocess
 import webbrowser
@@ -36,6 +38,36 @@ PORCUPINE_ACCESS_KEY = os.getenv("PORCUPINE_ACCESS_KEY")
 OURA_CLIENT_ID = os.getenv("CLIENT_ID")
 OURA_CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 OURA_REDIRECT_URI = "http://localhost:8000/oura/callback"
+
+
+@app.route("/options", methods=["POST"])
+def generate_options():
+    # updates user data to todays date and writes it to a json file called "user_data.json"
+    tokens = get_tokens()
+    metrics = get_bio_snapshot(
+        tokens.get("ourafy_access_token", None),
+        tokens.get("ourafy_refresh_token", None),
+    )  # gets all metrics in python dict
+    scores = compute_all_metrics(metrics)
+
+    voice_text = (
+        "I want to focus on coding a new feature, and occasionally check Notion."
+    )
+    oura_data = {
+        "stress_summary": metrics["day_summary"],
+        "readiness_score": metrics["score"],
+        "resting_heart_rate": metrics["resting_heart_rate"],
+        "hrv": metrics["hrv_balance"],
+        "sleep_score": metrics["score"],
+    }
+    oura_scores = {
+        "composite_focus_capacity_score": scores["cfc"],
+        "neurocognitive_readiness_model_score": scores["nrm"],
+        "autonomic_balance_ratio_score": scores["abr"],
+        "lock_in_readiness_score": scores["lir"],
+    }
+    focus_configs = get_focus_configs(voice_text, oura_data, oura_scores)
+    return focus_configs
 
 
 @app.route("/ourafy")
@@ -186,6 +218,9 @@ def app_open():
     uri = create_playlist(
         tokens["spotify_access_token"], data["playlist_title"], data["songs"]
     )
+
+    if uri == "No songs found.":
+        return {"error": "no songs found"}
 
     def open_requested_apps(apps: list[str]):
         for app in apps:

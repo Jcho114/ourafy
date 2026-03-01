@@ -1,10 +1,7 @@
 from openai import OpenAI
-import subprocess
 import json
 import logging
 from dotenv import load_dotenv
-from check import get_bio_snapshot, get_tokens
-from scoring import compute_all_metrics
 
 load_dotenv()
 
@@ -19,13 +16,6 @@ if not logger.handlers:
     logger.addHandler(ch)
 
 client = OpenAI()
-
-# updates user data to todays date and writes it to a json file called "user_data.json"
-tokens = get_tokens()
-metrics = get_bio_snapshot(
-    tokens.get("ourafy_access_token", None), tokens.get("ourafy_refresh_token", None)
-)  # gets all metrics in python dict
-scores = compute_all_metrics(metrics)
 
 STATIC_RULES = {
     "allowed_apps": ["VSCode", "Notion", "Slack", "Figma", "Chrome"],
@@ -230,50 +220,3 @@ def get_focus_configs(user_text: str, oura_data: dict, oura_scores: dict) -> dic
     )
 
     return json.loads(response.choices[0].message.content)
-
-
-APP_OPEN_MAP = {
-    "VSCode": "Visual Studio Code",
-}
-
-
-def enact_on_config(focus_config: dict):
-    for app in focus_config["apps_to_open"]:
-        if app not in APP_OPEN_MAP:
-            logger.warning(f"app {app} does not have an open mapping")
-            continue
-
-        logger.info(f"opening app {app}")
-        exit_code = subprocess.call(["/usr/bin/open", "-a", APP_OPEN_MAP[app]])
-        if exit_code != 0:
-            logger.error(f"subprocess failed with exit code {exit_code}")
-        else:
-            logger.info("app opened successfully")
-
-
-def main():
-    voice_text = (
-        "I want to focus on coding a new feature, and occasionally check Notion."
-    )
-    oura_data = {
-        "stress_summary": metrics["day_summary"],
-        "readiness_score": metrics["score"],
-        "resting_heart_rate": metrics["resting_heart_rate"],
-        "hrv": metrics["hrv_balance"],
-        "sleep_score": metrics["score"],
-    }
-    oura_scores = {
-        "composite_focus_capacity_score": scores["cfc"],
-        "neurocognitive_readiness_model_score": scores["nrm"],
-        "autonomic_balance_ratio_score": scores["abr"],
-        "lock_in_readiness_score": scores["lir"],
-    }
-    focus_configs = get_focus_configs(voice_text, oura_data, oura_scores)
-    print(json.dumps(focus_configs, indent=2))
-
-    # ENACT DOESNT WORK
-    # enact_on_config(focus_configs[0])
-
-
-if __name__ == "__main__":
-    main()
