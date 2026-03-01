@@ -2,7 +2,7 @@ let ctx: AudioContext | null = null
 
 const DEFAULT_COACH_ID = "jasonchen"
 
-type CoachQuipUrls = { on?: string; off?: string; tryit?: string }
+type CoachQuipUrls = { on?: string; off?: string; done?: string; tryit?: string }
 
 const MP3_URLS = import.meta.glob("../../assets/*/*.mp3", {
   eager: true,
@@ -37,6 +37,11 @@ const COACH_QUIP_URLS: Record<string, CoachQuipUrls> = (() => {
       continue
     }
 
+    if (base === "done" || base.startsWith("done") || base.startsWith("done-")) {
+      map[coach].done = url
+      continue
+    }
+
     // Back-compat with older filenames
     if (base.includes("on") && base.includes("start")) map[coach].on = url
     if (base.includes("off") && base.includes("start")) map[coach].off = url
@@ -47,6 +52,7 @@ const COACH_QUIP_URLS: Record<string, CoachQuipUrls> = (() => {
 
 let onModeStartQuip: AudioBuffer | null = null
 let offModeStartQuip: AudioBuffer | null = null
+let doneQuip: AudioBuffer | null = null
 let quipLoadPromise: Promise<void> | null = null
 let pendingCueToken = 0
 let loadedCoachId: string | null = null
@@ -112,17 +118,18 @@ function warmQuips(coachId: string) {
   if (loadedCoachId !== coachId) {
     onModeStartQuip = null
     offModeStartQuip = null
+    doneQuip = null
     quipLoadPromise = null
     loadedCoachId = coachId
   }
-  if (onModeStartQuip && offModeStartQuip) return
+  if (onModeStartQuip && offModeStartQuip && doneQuip) return
   if (quipLoadPromise) return
 
   const urls = getCoachUrls(coachId)
 
   quipLoadPromise = (async () => {
     try {
-      const [onBuf, offBuf] = await Promise.all([
+      const [onBuf, offBuf, doneBuf] = await Promise.all([
         onModeStartQuip
           ? Promise.resolve(onModeStartQuip)
           : urls.on
@@ -133,9 +140,15 @@ function warmQuips(coachId: string) {
           : urls.off
             ? decodeMp3(urls.off)
             : Promise.resolve(null),
+        doneQuip
+          ? Promise.resolve(doneQuip)
+          : urls.done
+            ? decodeMp3(urls.done)
+            : Promise.resolve(null),
       ])
       if (onBuf) onModeStartQuip = onBuf
       if (offBuf) offModeStartQuip = offBuf
+      if (doneBuf) doneQuip = doneBuf
     } catch {
       // ignore
     }
@@ -228,15 +241,19 @@ export function playPhaseCue(phase: "focus" | "shortBreak" | "done") {
     return
   }
 
-  // "done": use the coach "off" cue instead of a beep.
-  if (offModeStartQuip) {
-    playBuffer(offModeStartQuip)
+  // "done": prefer coach done quip; fall back to off cue.
+  if (doneQuip) {
+    playBuffer(doneQuip)
     return
   }
 
   const token = ++pendingCueToken
   void whenQuipsReady().then(() => {
     if (token !== pendingCueToken) return
+    if (doneQuip) {
+      playBuffer(doneQuip)
+      return
+    }
     if (offModeStartQuip) playBuffer(offModeStartQuip)
   })
 }

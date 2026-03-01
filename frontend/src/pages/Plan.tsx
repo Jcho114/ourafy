@@ -210,9 +210,6 @@ export default function Plan() {
   function choose(mode: PlanMode, payload: OptionsResponse) {
     unlockAudio();
 
-    const tab = window.open("about:blank", "_blank");
-    if (tab) tab.opener = null;
-
     const openBody: OpenRequestBody = {
       playlist_title: mode.data.playlist_title,
       songs: (mode.data.songs ?? []).map((s) => ({
@@ -227,22 +224,19 @@ export default function Plan() {
       .then((payload) => {
         const url = payload?.url;
         if (!url || typeof url !== "string") {
-          if (tab && !tab.closed) tab.close();
           toast.error("Couldn't open Spotify playlist.");
           return;
         }
 
-        if (tab && !tab.closed) {
-          tab.location.assign(url);
-          return;
-        }
-
         const w = window.open(url, "_blank");
-        if (w) w.opener = null;
+        if (w) {
+          w.opener = null;
+        } else {
+          toast.message("Popup blocked. Allow popups to open Spotify.");
+        }
       })
       .catch((err) => {
         console.error(err);
-        if (tab && !tab.closed) tab.close();
         toast.error("Couldn't open Spotify playlist.");
       });
 
