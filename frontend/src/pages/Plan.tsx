@@ -1,7 +1,8 @@
 import * as React from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,21 @@ import { getLockinOptions } from "@/api/lockinOptions";
 import type { LockinOption } from "@/features/lockin/types";
 import { unlockAudio } from "@/features/audio/beeps";
 import { StepRail } from "@/components/lockin/StepRail";
+
+const OPEN_REQUEST_BODY = {
+  playlist_title: "Testing Title",
+  songs: [
+    {
+      track: "I thought I saw your face today",
+      artist: "She & Him",
+    },
+  ],
+  apps_to_open: ["VSCode"],
+} as const;
+
+type OpenResponse = {
+  url: string;
+};
 
 function readParams(search: string) {
   const sp = new URLSearchParams(search);
@@ -67,8 +83,47 @@ export default function Plan() {
     staleTime: 60_000,
   });
 
+  const openPlaylist = useMutation({
+    mutationKey: ["open-playlist"],
+    mutationFn: async () => {
+      const res = await axios.post<OpenResponse>(
+        "http://localhost:8000/open",
+        OPEN_REQUEST_BODY,
+      );
+      return res.data;
+    },
+  });
+
   function choose(option: LockinOption) {
     unlockAudio();
+
+    const tab = window.open("about:blank", "_blank");
+    if (tab) tab.opener = null;
+
+    void openPlaylist
+      .mutateAsync()
+      .then((payload) => {
+        const url = payload?.url;
+        if (!url || typeof url !== "string") {
+          if (tab && !tab.closed) tab.close();
+          toast.error("Couldn't open Spotify playlist.");
+          return;
+        }
+
+        if (tab && !tab.closed) {
+          tab.location.assign(url);
+          return;
+        }
+
+        const w = window.open(url, "_blank");
+        if (w) w.opener = null;
+      })
+      .catch((err) => {
+        console.error(err);
+        if (tab && !tab.closed) tab.close();
+        toast.error("Couldn't open Spotify playlist.");
+      });
+
     const q = new URLSearchParams({
       on: String(option.pomodoro.minutes_on),
       off: String(option.pomodoro.minutes_off),
