@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
 import axios from "axios";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -12,9 +12,65 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { unlockAudio } from "@/features/audio/beeps";
 import { StepRail } from "@/components/lockin/StepRail";
+
+const LOADING_MESSAGES = [
+  "Reading your snapshot…",
+  "Tuning work/break cadence…",
+  "Picking a vibe that fits…",
+  "Asking your coach for a plan…",
+  "Ranking options by momentum…",
+  "Finding the cleanest start…",
+  "Aligning your playlist…",
+  "Building a session that lands…",
+  "Locking in the next 60 minutes…",
+] as const;
+
+function OptionsLoading() {
+  const [msgIdx, setMsgIdx] = React.useState(() =>
+    Math.floor(Math.random() * LOADING_MESSAGES.length),
+  );
+
+  React.useEffect(() => {
+    const id = window.setInterval(() => {
+      setMsgIdx((prev) => {
+        if (LOADING_MESSAGES.length <= 1) return prev;
+        let next = prev;
+        for (let i = 0; i < 6 && next === prev; i++) {
+          next = Math.floor(Math.random() * LOADING_MESSAGES.length);
+        }
+        return next;
+      });
+    }, 1200);
+
+    return () => window.clearInterval(id);
+  }, []);
+
+  return (
+    <Card className="border-border/60 bg-card/40 backdrop-blur w-full">
+      <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+        <div
+          className="flex items-center justify-center size-14 rounded-2xl border border-border/60 bg-background/25 shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_16px_60px_rgba(0,0,0,0.35)]"
+          role="status"
+          aria-live="polite"
+          aria-label="Loading session options"
+        >
+          <Loader2 className="size-7 animate-spin text-muted-foreground" />
+        </div>
+        <div className="mt-5 text-sm tracking-[0.18em] text-muted-foreground">
+          FETCHING OPTIONS
+        </div>
+        <div className="mt-2 max-w-md text-base text-foreground/90">
+          {LOADING_MESSAGES[msgIdx]}
+        </div>
+        <div className="mt-3 text-xs text-muted-foreground">
+          Usually just a moment.
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 type OptionSong = {
   artist: string;
@@ -79,6 +135,8 @@ function readParams(search: string) {
   const priority = (sp.get("priority") ?? "").slice(0, 16);
   const time_available_min = Number(sp.get("time_available_min") ?? "");
   const hard_stop = (sp.get("hard_stop") ?? "").slice(0, 16);
+  const coachRaw = (sp.get("coach") ?? "").trim().toLowerCase();
+  const coach = /^[a-z0-9_-]{1,48}$/.test(coachRaw) ? coachRaw : "";
   return {
     focus,
     blockers,
@@ -88,6 +146,7 @@ function readParams(search: string) {
       ? time_available_min
       : undefined,
     hard_stop,
+    coach,
   };
 }
 
@@ -116,9 +175,13 @@ export default function Plan() {
   React.useEffect(() => {
     if (!params.focus.trim()) {
       toast.message("Add your lock target first.");
-      navigate("/lock-in");
+      navigate(
+        `/snapshot?${new URLSearchParams({
+          ...(params.coach ? { coach: params.coach } : {}),
+        }).toString()}`,
+      );
     }
-  }, [navigate, params.focus]);
+  }, [navigate, params.coach, params.focus]);
 
   const query = useQuery({
     queryKey: ["options"],
@@ -201,6 +264,7 @@ export default function Plan() {
       blockers: params.blockers,
       apps: (payload.apps_to_open ?? []).join(","),
       reason,
+      ...(params.coach ? { coach: params.coach } : {}),
     });
     navigate(`/pomodoro?${q.toString()}`);
   }
@@ -224,10 +288,14 @@ export default function Plan() {
     ];
   }, [query.data]);
 
-  const recommendedKey = React.useMemo<ModeKey | null>(
-    () => normalizeModeKey(query.data?.recommended_mode),
-    [query.data?.recommended_mode],
-  );
+  const recommendedKey = React.useMemo<ModeKey | null>(() => {
+    const raw = normalizeModeKey(query.data?.recommended_mode);
+    const available = new Set(modes.map((m) => m.key));
+    if (raw && available.has(raw)) return raw;
+
+    // If API doesn't provide a valid recommended mode, default to the first.
+    return modes[0]?.key ?? null;
+  }, [modes, query.data?.recommended_mode]);
 
   const orderedModes = React.useMemo(() => {
     if (!recommendedKey) return modes;
@@ -245,13 +313,13 @@ export default function Plan() {
           steps={[
             {
               key: "intake",
-              label: "Lock Target",
-              sublabel: "What you're doing",
+              label: "Pick Coach",
+              sublabel: "Lifestyle coach",
             },
             {
               key: "snapshot",
               label: "Bio + Setup",
-              sublabel: "Readiness + inputs",
+              sublabel: "Lock target + inputs",
             },
             {
               key: "options",
@@ -276,7 +344,12 @@ export default function Plan() {
           <Button
             variant="outline"
             onClick={() =>
-              navigate(`/snapshot?focus=${encodeURIComponent(params.focus)}`)
+              navigate(
+                `/snapshot?${new URLSearchParams({
+                  focus: params.focus,
+                  ...(params.coach ? { coach: params.coach } : {}),
+                }).toString()}`,
+              )
             }
             className="border-border/60 bg-background/40 backdrop-blur"
           >
@@ -286,53 +359,7 @@ export default function Plan() {
         </div>
 
         <div className="grid grid-cols-1 gap-4">
-          {query.isLoading ? (
-            <>
-              {Array.from({ length: 4 }).map((_, idx) => (
-                <Card
-                  key={idx}
-                  className="border-border/60 bg-card/40 backdrop-blur"
-                >
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between gap-3">
-                      <Skeleton className="h-5 w-36" />
-                      <Skeleton className="h-6 w-28" />
-                    </CardTitle>
-                    <CardDescription className="flex items-center gap-2">
-                      <Skeleton className="h-4 w-40" />
-                      <Skeleton className="h-4 w-24" />
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="rounded-xl border border-border/60 bg-background/35 p-4">
-                      <Skeleton className="h-3 w-20" />
-                      <div className="mt-3 space-y-2">
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-[92%]" />
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-border/60 bg-background/35 p-4">
-                      <Skeleton className="h-3 w-24" />
-                      <div className="mt-3 space-y-2">
-                        {Array.from({ length: 4 }).map((_, lineIdx) => (
-                          <div
-                            key={lineIdx}
-                            className="flex items-baseline justify-between gap-3"
-                          >
-                            <Skeleton className="h-4 w-52" />
-                            <Skeleton className="h-3 w-16" />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex justify-end">
-                      <Skeleton className="h-9 w-28" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </>
-          ) : null}
+          {query.isLoading ? <OptionsLoading /> : null}
 
           {query.isError ? (
             <Card className="border-border/60 bg-card/40 backdrop-blur">

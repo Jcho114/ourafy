@@ -1,6 +1,6 @@
 import requests
 import json
-from datetime import date
+from datetime import date, timedelta
 import os
 from dotenv import load_dotenv
 from db import sync_oura_data
@@ -9,7 +9,7 @@ load_dotenv()
 
 # dates for request parameters
 today = date.today()
-# yesterday = today - timedelta(days=1)
+yesterday = today - timedelta(days=1)
 
 
 def get_tokens() -> dict:
@@ -176,4 +176,4 @@ def get_bio_snapshot(ourafy_access_token: str, ourafy_refresh_token: str):
 if __name__ == "__main__":
     tokens = get_tokens()
     data = get_bio_snapshot(**tokens)
-    sync_oura_data('biometrics', data)
+    sync_oura_data("biometrics", data)

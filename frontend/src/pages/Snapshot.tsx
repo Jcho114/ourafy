@@ -12,7 +12,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -26,7 +25,7 @@ import { getOuraSnapshot } from "@/api/ouraSnapshot";
 import { StepRail } from "@/components/lockin/StepRail";
 
 const MAX_FOCUS_CHARS = 150;
-const MAX_BLOCKERS_CHARS = 120;
+const DEFAULT_COACH_ID = "jasonchen";
 
 function readQueryFocus(search: string) {
   const sp = new URLSearchParams(search);
@@ -34,19 +33,68 @@ function readQueryFocus(search: string) {
   return (v ?? "").slice(0, MAX_FOCUS_CHARS);
 }
 
+function readQueryCoach(search: string) {
+  const sp = new URLSearchParams(search);
+  const raw = (sp.get("coach") ?? "").trim().toLowerCase();
+  if (!raw) return "";
+  if (!/^[a-z0-9_-]{1,48}$/.test(raw)) return "";
+  return raw;
+}
+
+function readStoredCoach() {
+  try {
+    const raw = (window.localStorage.getItem("ourafy.coach") ?? "")
+      .trim()
+      .toLowerCase();
+    if (!raw) return "";
+    if (!/^[a-z0-9_-]{1,48}$/.test(raw)) return "";
+    return raw;
+  } catch {
+    return "";
+  }
+}
+
+function coachDisplayName(id: string) {
+  if (id === "jasonchen") return "Jason Chen";
+  if (id === "heisenberg") return "Heisenberg";
+  return id
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (m) => m.toUpperCase());
+}
+
 export default function Snapshot() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const focus = React.useMemo(
+  const initialFocus = React.useMemo(
     () => readQueryFocus(location.search),
     [location.search],
   );
+  const [focus, setFocus] = React.useState(() => initialFocus);
+  const focusRef = React.useRef<HTMLTextAreaElement | null>(null);
+
+  React.useEffect(() => {
+    setFocus(initialFocus);
+  }, [initialFocus]);
+
+  const coach = React.useMemo(() => {
+    const fromQuery = readQueryCoach(location.search);
+    const fromStorage = typeof window === "undefined" ? "" : readStoredCoach();
+    return fromQuery || fromStorage || DEFAULT_COACH_ID;
+  }, [location.search]);
+
+  React.useEffect(() => {
+    if (!coach) return;
+    try {
+      window.localStorage.setItem("ourafy.coach", coach);
+    } catch {
+      // ignore
+    }
+  }, [coach]);
+
   const [taskType, setTaskType] = React.useState<string>("build");
   const [priority, setPriority] = React.useState<string>("medium");
-  const [timeAvailableMin, setTimeAvailableMin] = React.useState<number>(60);
   const [hardStop] = React.useState<string>("");
-  const [blockers, setBlockers] = React.useState("");
 
   const snapshot = useQuery({
     queryKey: ["oura-snapshot"],
@@ -54,17 +102,10 @@ export default function Snapshot() {
     staleTime: 60_000,
   });
 
-  React.useEffect(() => {
-    if (!focus.trim()) {
-      toast.message("Add your lock target first.");
-      navigate("/lock-in");
-    }
-  }, [focus, navigate]);
-
   function startSession() {
     if (!focus.trim()) {
       toast.error("Missing lock target.");
-      navigate("/lock-in");
+      focusRef.current?.focus();
       return;
     }
 
@@ -72,9 +113,9 @@ export default function Snapshot() {
       focus: focus.trim().slice(0, MAX_FOCUS_CHARS),
       task_type: taskType,
       priority,
-      time_available_min: String(Math.round(timeAvailableMin)),
       hard_stop: hardStop,
-      blockers: blockers.trim().slice(0, MAX_BLOCKERS_CHARS),
+      blockers: "",
+      ...(coach ? { coach } : {}),
     });
 
     navigate(`/plan?${q.toString()}`);
@@ -89,13 +130,13 @@ export default function Snapshot() {
           steps={[
             {
               key: "intake",
-              label: "Lock Target",
-              sublabel: "What you're doing",
+              label: "Pick Coach",
+              sublabel: "Lifestyle coach",
             },
             {
               key: "snapshot",
               label: "Bio + Setup",
-              sublabel: "Readiness + inputs",
+              sublabel: "Lock target + inputs",
             },
             {
               key: "options",
@@ -120,7 +161,12 @@ export default function Snapshot() {
           <Button
             variant="outline"
             onClick={() =>
-              navigate(`/lock-in?focus=${encodeURIComponent(focus)}`)
+              navigate(
+                `/lock-in?${new URLSearchParams({
+                  ...(focus ? { focus } : {}),
+                  ...(coach ? { coach } : {}),
+                }).toString()}`,
+              )
             }
             className="border-border/60 bg-background/40 backdrop-blur"
           >
@@ -141,13 +187,37 @@ export default function Snapshot() {
           <Card className="border-border/60 bg-card/40 backdrop-blur">
             <CardHeader>
               <CardTitle className="tracking-wide">
-                Tailor This Session
+                Lock Target + Setup
               </CardTitle>
               <CardDescription>
-                Lock target: <span className="font-mono">{focus || "—"}</span>
+                Coach: <span className="font-mono">{coachDisplayName(coach)}</span>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <Label htmlFor="focus">What are you locking in for?</Label>
+                  <span className="text-xs text-muted-foreground font-mono">
+                    {focus.length}/{MAX_FOCUS_CHARS}
+                  </span>
+                </div>
+                <Textarea
+                  ref={focusRef}
+                  id="focus"
+                  value={focus}
+                  onChange={(e) =>
+                    setFocus(e.target.value.slice(0, MAX_FOCUS_CHARS))
+                  }
+                  placeholder="Ship the onboarding flow"
+                  wrap="soft"
+                  maxLength={MAX_FOCUS_CHARS}
+                  className="min-h-24 border-border/60 bg-background font-mono"
+                />
+                <div className="text-xs text-muted-foreground">
+                  Keep it concrete. One line is enough.
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Task type</Label>
@@ -177,44 +247,6 @@ export default function Snapshot() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Time available</Label>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <Slider
-                      value={[timeAvailableMin]}
-                      min={15}
-                      max={180}
-                      step={5}
-                      onValueChange={(v) => setTimeAvailableMin(v[0])}
-                    />
-                  </div>
-                  <div className="w-16 text-right font-mono text-sm text-muted-foreground">
-                    {timeAvailableMin}m
-                  </div>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Used to recommend cycles and break length.
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="blockers">
-                  Distractions to block (optional)
-                </Label>
-                <Textarea
-                  id="blockers"
-                  value={blockers}
-                  onChange={(e) =>
-                    setBlockers(e.target.value.slice(0, MAX_BLOCKERS_CHARS))
-                  }
-                  placeholder="Slack, email, YouTube"
-                  wrap="soft"
-                  maxLength={MAX_BLOCKERS_CHARS}
-                  className="min-h-16 border-border/60 bg-background"
-                />
               </div>
 
               <div className="flex items-center justify-between pt-2">

@@ -143,13 +143,13 @@ export default function Pomodoro() {
           steps={[
             {
               key: "intake",
-              label: "Lock Target",
-              sublabel: "What you're doing",
+              label: "Pick Coach",
+              sublabel: "Lifestyle coach",
             },
             {
               key: "snapshot",
               label: "Bio + Setup",
-              sublabel: "Readiness + inputs",
+              sublabel: "Lock target + inputs",
             },
             {
               key: "options",
