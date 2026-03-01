@@ -15,6 +15,18 @@ from flask_cors import CORS
 import subprocess
 import webbrowser
 import time
+from config import (
+    OURA_CLIENT_ID,
+    OURA_CLIENT_SECRET,
+    OURA_REDIRECT_URI,
+    SPOTIFY_AUTH_URL,
+    SPOTIFY_CLIENT_ID,
+    SPOTIFY_CLIENT_SECRET,
+    SPOTIFY_REDIRECT_URI,
+    SPOTIFY_TOKEN_URL,
+    APP_OPEN_MAP,
+    PORCUPINE_ACCESS_KEY,
+)
 
 """
 File for the wakeword daemon as well as refreshing auth tokens for Oura and Spotify
@@ -25,19 +37,6 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 app.secret_key = os.urandom(24)
-
-SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
-SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
-SPOTIFY_TOKEN = ""
-REDIRECT_URI = "http://127.0.0.1:8000/spotify/callback"
-AUTH_URL = "https://accounts.spotify.com/authorize"
-TOKEN_URL = "https://accounts.spotify.com/api/token"
-PORCUPINE_ACCESS_KEY = os.getenv("PORCUPINE_ACCESS_KEY")
-
-# oauth2 application credentials for Oura
-OURA_CLIENT_ID = os.getenv("CLIENT_ID")
-OURA_CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-OURA_REDIRECT_URI = "http://localhost:8000/oura/callback"
 
 
 @app.route("/options", methods=["POST"])
@@ -152,7 +151,7 @@ def spotify_index():
         print("Client ID or secret not found. Did you edit .env?")
         return
     scope = "playlist-modify-public playlist-modify-private user-read-private user-read-email playlist-modify-public playlist-modify-private"
-    auth_query = f"{AUTH_URL}?response_type=code&client_id={SPOTIFY_CLIENT_ID}&scope={scope}&redirect_uri={REDIRECT_URI}"
+    auth_query = f"{SPOTIFY_AUTH_URL}?response_type=code&client_id={SPOTIFY_CLIENT_ID}&scope={scope}&redirect_uri={SPOTIFY_REDIRECT_URI}"
     return redirect(auth_query)
 
 
@@ -174,11 +173,11 @@ def spotify_callback():
     token_data = {
         "grant_type": "authorization_code",
         "code": code,
-        "redirect_uri": REDIRECT_URI,
+        "redirect_uri": SPOTIFY_REDIRECT_URI,
         "client_id": SPOTIFY_CLIENT_ID,
         "client_secret": SPOTIFY_CLIENT_SECRET,
     }
-    response = requests.post(TOKEN_URL, data=token_data)
+    response = requests.post(SPOTIFY_TOKEN_URL, data=token_data)
     token_info = response.json()
     print(token_info)
     access_token = token_info.get("access_token")
@@ -197,13 +196,7 @@ def app_close():
     - apps str[]: list of apps to close
     """
     apps = request.args.get("apps")
-    for app in apps:
-        kill_running_processes(app)
-
-
-APP_OPEN_MAP = {
-    "VSCode": "Visual Studio Code",
-}
+    kill_running_processes(apps)
 
 
 @app.route("/open", methods=["POST"])
@@ -299,6 +292,7 @@ def run_porcupine_listener():
                 break
         time.sleep(0.5)
         print("Keyword heard")
+        kill_running_processes()  # using default list
         webbrowser.open_new_tab("http://localhost:5173/")
     except Exception as e:
         print(f"Error: {e}")

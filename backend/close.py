@@ -8,6 +8,7 @@ DISTRACTIONS_LIST = [
     "Polytopia",
     "Steam",
     "Discord",
+    "Instagram",
 ]
 
 PRODUCTIVE_APP_LIST = [
@@ -20,7 +21,7 @@ PRODUCTIVE_APP_LIST = [
 ]
 
 
-def kill_running_processes(list):
+def kill_running_processes(list=DISTRACTIONS_LIST):
     try:
         output = subprocess.check_output(["ps", "-ax", "-o", "pid,command"]).decode(
             "utf-8"
