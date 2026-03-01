@@ -1,24 +1,7 @@
 import os
 import signal
 import subprocess
-
-DISTRACTIONS_LIST = [
-    "Minecraft",
-    "Roblox",
-    "Polytopia",
-    "Steam",
-    "Discord",
-    "Instagram",
-]
-
-PRODUCTIVE_APP_LIST = [
-    "Google Chrome",
-    "Firefox",
-    "Safari",
-    "VSCode",
-    "Obsidian",
-    "Notion",
-]
+from config import DISTRACTIONS_LIST
 
 
 def kill_running_processes(list=DISTRACTIONS_LIST):

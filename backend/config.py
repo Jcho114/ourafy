@@ -1,6 +1,24 @@
 import os
 import json
 
+DISTRACTIONS_LIST = [
+    "Minecraft",
+    "Roblox",
+    "Polytopia",
+    "Steam",
+    "Discord",
+    "Instagram",
+]
+
+PRODUCTIVE_APP_LIST = [
+    "Google Chrome",
+    "Firefox",
+    "Safari",
+    "VSCode",
+    "Obsidian",
+    "Notion",
+]
+
 APP_OPEN_MAP = {
     "VSCode": "Visual Studio Code",
     "Notion": "Notion",
