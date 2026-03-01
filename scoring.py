@@ -74,10 +74,12 @@ def compute_all_metrics(metrics):
         abr_score = future_abr.result()
         lockin_score = future_lockin.result()
 
-    print(f"composite focus capacity score: {focus_score}")
-    print(f"neurocognitive readiness model score: {neuro_score}")
-    print(f"autonomic balance ratio score: {abr_score}")
-    print(f"lock in score: {lockin_score}")
+    # print(f"composite focus capacity score: {focus_score}")
+    # print(f"neurocognitive readiness model score: {neuro_score}")
+    # print(f"autonomic balance ratio score: {abr_score}")
+    # print(f"lock in score: {lockin_score}")
+
+    return {"cfc": focus_score, "nrm": neuro_score, "abr": abr_score, "lir": lockin_score}
 
 
 def main():

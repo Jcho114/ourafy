@@ -3,13 +3,8 @@ import subprocess
 import json
 import logging
 from dotenv import load_dotenv
-from check import (
-    extract_readiness,
-    extract_sleep,
-    extract_stress,
-    write_user_data,
-    return_data,
-)
+from check import get_bio_snapshot, get_tokens
+from scoring import compute_all_metrics
 
 load_dotenv()
 
@@ -26,13 +21,9 @@ if not logger.handlers:
 client = OpenAI()
 
 # updates user data to todays date and writes it to a json file called "user_data.json"
-write_user_data()
-metrics = return_data()
-
-readiness = extract_readiness(metrics)
-sleep = extract_sleep(metrics)
-stress = extract_stress(metrics)
-
+tokens = get_tokens()
+metrics = get_bio_snapshot(**tokens) # gets all metrics in python dict
+scores = compute_all_metrics(metrics)
 
 STATIC_RULES = {
     "allowed_apps": ["VSCode", "Notion", "Slack", "Figma", "Chrome"],
@@ -42,27 +33,123 @@ STATIC_RULES = {
 JSON_STRUCTURE = [
     {
         "apps_to_open": ["app_name_1", "app_name_2"],
-        "pomodoro": {"minutes_on": "X", "minutes_off": "Y", "cycles": "Z"},
-        "reason": "reason for this plan",
+        "pomodoro": {
+            "recover": {
+                "suitability_score": "score",
+                "minutes_on": "x",
+                "minutes_off": "y",
+                "cycles": "z",
+                "songs": [
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"}
+                ],
+            },
+            "standard": {
+                "suitability_score": "score",
+                "minutes_on": "x",
+                "minutes_off": "y",
+                "cycles": "z",
+                "songs": [
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"}
+                ],
+            },
+            "sprint": {
+                "suitability_score": "score",
+                "minutes_on": "x",
+                "minutes_off": "y",
+                "cycles": "z",
+                "songs": [
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"}
+                ],
+            },
+            "lockin": {
+                "suitability_score": "score",
+                "minutes_on": "x",
+                "minutes_off": "y",
+                "cycles": "z",
+                "songs": [
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"},
+                    {"name": "song_name", "artist": "artist_name"}
+                ],
+            }
+        },
+        "recommended_mode": "mode",
+
+        "reason": "reason for this plan"
     }
 ]
 
 SYSTEM_PROMPT = f"""
-# Focus Session Optimization Engine – System Prompt
+Focus Session Optimization Engine – System Prompt
 
-## Role
+Role:
+You are a Biometric Performance Architect. Your goal is to analyze a user's physiological data and map it to one of four specific execution modes. You calculate a Suitability Score (0.0 - 1.0) for each mode to determine how perfectly the current biological state matches the recommended execution, 0 being not suitable at all and 1 being the most suitable based on your health metrics and scores.
 
-You are an optimization engine that determines a user’s ideal focus session configuration.
+Data:
+You are going to be given the following data from the User, specifically from their Oura ring.
+    - Stress Summary
+    - Readiness Score
+    - Resting Heart Rate
+    - HRV
+    - Sleep Score
+
+Scores:
+You are going to be given the following scores that represent the following: 
+ - Composite Focus Capacity Score: A weighted recovery-performance model designed to estimate the user's total mental bandwidth
+ - Neurocognitive Readiness Model: Estimates cognitive clarity potential based on restorative sleep stages
+ - Autonomic Balance Ratio: Estimates the dominance of the sympathetic vs. parasympathetic nervous sytem
+ - Lock-In Readiness Function: The Core Activation Metric. This value determines if the environment triggers a "Deep Work" state.
+
 
 Your job is to decide:
+Execution Modes
+1. RECOVER: Triggered by high stress, low HRV balance, or body temperature deviation. Goal: Nervous system down-regulation. 
+2. STANDARD: Baseline readiness. Goal: Consistent, sustainable output with moderate breaks.
+3. SPRINT: High readiness, but potentially higher Cognitive Strain. Goal: High-intensity, short-duration (25m) "burst" tasks.
+4. LOCK-IN: Peak readiness ($LI > 0.80$), high sleep quality, and low stress. Goal: 90+ minute deep work flow states.
 
-1. Which apps to open
-2. What Pomodoro configuration to use
-   - X minutes ON
-   - Y minutes OFF
-   - Z cycles
+Decision Logic
+- Primary Driver: Use the Lock-In Readiness Function (LI) to determine the top-tier mode.
+- Stress Penalty: If Cognitive Strain (CS) or Thermal Stress (TSL) is high, drastically lower the suitability of LOCK-IN and SPRINT, regardless of other scores.
+- Interval Logic:
+    - High Neurocognitive Readiness = Longer 'ON' durations.
+    - Low Autonomic Balance Ratio = Increased 'OFF' durations and fewer cycles.
 
-## Locked Rules In JSON (DO NOT IGNORE)
+ Locked Rules In JSON (DO NOT IGNORE)
 
 ```json
 {json.dumps(STATIC_RULES)}
@@ -70,8 +157,7 @@ Your job is to decide:
 
 ---
 
-## Behavior Rules
-
+ Behavior Rules
 - Reduce stress if stress is high
 - Increase intensity if readiness and HRV are high
 - Avoid burnout if sleep quality is low
@@ -86,7 +172,7 @@ Your job is to decide:
 
 ---
 
-## Output Format (STRICT JSON ONLY)
+ Output Format (STRICT JSON ONLY)
 
 Return ONLY valid JSON in this exact structure:
 
@@ -96,7 +182,7 @@ Return ONLY valid JSON in this exact structure:
 """
 
 
-def get_focus_configs(user_text: str, oura_data: dict) -> dict:
+def get_focus_configs(user_text: str, oura_data: dict, oura_scores: dict) -> dict:
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -107,6 +193,7 @@ def get_focus_configs(user_text: str, oura_data: dict) -> dict:
                     {
                         "user_text": user_text,
                         "oura_data": oura_data,
+                        "scores": oura_scores,
                     }
                 ),
             },
@@ -164,16 +251,23 @@ def main():
         "I want to focus on coding a new feature, and occasionally check Notion."
     )
     oura_data = {
-        "stress_summary": stress["day_summary"],
-        "readiness_score": readiness["score"],
-        "resting_heart_rate": readiness["resting_heart_rate"],
-        "hrv": readiness["hrv_balance"],
-        "sleep_score": sleep["score"],
+        "stress_summary": metrics["day_summary"],
+        "readiness_score": metrics["score"],
+        "resting_heart_rate": metrics["resting_heart_rate"],
+        "hrv": metrics["hrv_balance"],
+        "sleep_score": metrics["score"],
     }
-    focus_configs = get_focus_configs(voice_text, oura_data)
+    oura_scores = {
+        "composite_focus_capacity_score": scores['cfc'],
+        "neurocognitive_readiness_model_score": scores['nrm'],
+        "autonomic_balance_ratio_score": scores['abr'],
+        "lock_in_readiness_score": scores['lir'],
+    }
+    focus_configs = get_focus_configs(voice_text, oura_data, oura_scores)
     print(json.dumps(focus_configs, indent=2))
 
-    enact_on_config(focus_configs[0])
+    # ENACT DOESNT WORK
+    # enact_on_config(focus_configs[0])
 
 
 if __name__ == "__main__":
