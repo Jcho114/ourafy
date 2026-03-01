@@ -207,6 +207,10 @@ Decision Logic
     - High Neurocognitive Readiness = Longer 'ON' durations.
     - Low Autonomic Balance Ratio = Increased 'OFF' durations and fewer cycles.
 
+Song Choice
+When choosing songs for the output mentioned below, make sure to tailor them to the needs of the user based on the factors we discussed earlier. Also
+ensure that they are actual songs that are hopefully available on Spotify.
+    
  Locked Rules In JSON (DO NOT IGNORE)
 
 ```json
