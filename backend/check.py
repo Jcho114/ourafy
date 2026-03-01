@@ -19,8 +19,8 @@ def get_tokens() -> dict:
     return tokens
 
 
-# GLOBAL header and parameter for GET requests
-PARAMS = {"start_date": f"{today}", "end_date": f"{today}"}
+# GLOBAL header and parameter for GET requests, we used yesterdays data for the demo since we have a full days worth of data instead of a half days
+PARAMS = {"start_date": f"{yesterday}", "end_date": f"{yesterday}"}
 
 
 def refresh_tokens():
