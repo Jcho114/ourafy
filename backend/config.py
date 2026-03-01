@@ -14,6 +14,7 @@ DISTRACTIONS_LIST = [
     "Steam",
     "Discord",
     "Instagram",
+    "Messages",
 ]
 
 PRODUCTIVE_APP_LIST = [
