@@ -45,7 +45,7 @@ export default function Snapshot() {
   const [taskType, setTaskType] = React.useState<string>("build");
   const [priority, setPriority] = React.useState<string>("medium");
   const [timeAvailableMin, setTimeAvailableMin] = React.useState<number>(60);
-  const [hardStop, setHardStop] = React.useState<string>("");
+  const [hardStop] = React.useState<string>("");
   const [blockers, setBlockers] = React.useState("");
 
   const snapshot = useQuery({

@@ -11,6 +11,7 @@ from check import get_bio_snapshot
 from close import kill_running_processes
 from flask_cors import CORS
 import subprocess
+import webbrowser
 
 """
 File for the wakeword daemon as well as refreshing auth tokens for Oura and Spotify
@@ -28,7 +29,7 @@ SPOTIFY_TOKEN = ""
 REDIRECT_URI = "http://127.0.0.1:8000/spotify/callback"
 AUTH_URL = "https://accounts.spotify.com/authorize"
 TOKEN_URL = "https://accounts.spotify.com/api/token"
-ACCESS_KEY = os.getenv("ACCESS_KEY")
+PORCUPINE_ACCESS_KEY = os.getenv("PORCUPINE_ACCESS_KEY")
 
 # oauth2 application credentials for Oura
 OURA_CLIENT_ID = os.getenv("CLIENT_ID")
@@ -245,7 +246,10 @@ def create_playlist(access_token, playlist_title, songs):
 
 
 def run_porcupine_listener():
-    porcupine = pvporcupine.create(access_key=ACCESS_KEY, keywords=["bumblebee"])
+    print("Starting listener instance")
+    porcupine = pvporcupine.create(
+        access_key=PORCUPINE_ACCESS_KEY, keywords=["porcupine"]
+    )
     recorder = PvRecorder(frame_length=porcupine.frame_length)
     recorder.start()
 
@@ -254,7 +258,9 @@ def run_porcupine_listener():
             audio_frame = recorder.read()
             keyword_index = porcupine.process(audio_frame)
             if keyword_index == 0:
-                print("Keyword heard")  # WORKS
+                break
+        print("Keyword heard")
+        webbrowser.open_new_tab("http://localhost:5173/")
     except Exception as e:
         print(f"Error: {e}")
     finally:
@@ -264,6 +270,6 @@ def run_porcupine_listener():
 
 
 if __name__ == "__main__":
-    # listener_thread = threading.Thread(target=run_porcupine_listener, daemon=True)
-    # listener_thread.start()
-    app.run(host="127.0.0.1", port=8000, debug=True)
+    listener_thread = threading.Thread(target=run_porcupine_listener, daemon=True)
+    listener_thread.start()
+    app.run(host="127.0.0.1", port=8000, debug=True, use_reloader=False)
