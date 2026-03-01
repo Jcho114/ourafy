@@ -26,33 +26,3 @@ We learned quite a lot about integrating various pieces of technology into one c
 
 ## Whats next
 We would like to implement a graph similar to GitHub's commit history to track study habits and corraborate that with Oura ring data for long term analysis of individual performance.
-
-## Formulas
-
-**Composite Focus Capacity Score ($F$)**\
-A weighted recovery-performance model designed to estimate the user's total mental bandwidth.
-
-$$F = w_1(\text{score}) + w_2(\text{hrv\_balance}) + w_3(\text{sleep\_balance}) + w_4(\text{efficiency}) + w_5(\text{recovery\_index})$$
-
----
-
-**Neurocognitive Readiness Model ($NR$)**\
-Estimates cognitive clarity potential based on restorative sleep stages.
-
-$$NR = \theta_1(\text{hrv\_balance}) + \theta_2(\text{deep\_sleep}) + \theta_3(\text{rem\_sleep}) - \theta_4(\text{stress\_high})$$
-
----
-
-**Autonomic Balance Ratio ($ABR$)**\
-Estimates the dominance of the sympathetic vs. parasympathetic nervous system.
-
-$$ABR = \frac{\text{hrv\_balance}}{\text{resting\_heart\_rate}}$$
-
----
-
-**Lock-In Readiness Function ($LI$)**\
-**The Core Activation Metric.** This value determines if the environment triggers a "Deep Work" state.
-
-$$LI = \frac{\text{score} + \text{hrv\_balance} + \text{sleep\_balance} + \text{deep\_sleep}}{4} - k(\text{stress\_high})$$
-
----
