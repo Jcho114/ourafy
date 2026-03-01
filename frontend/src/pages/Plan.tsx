@@ -45,6 +45,16 @@ type OptionsResponse = {
 
 type ModeKey = "LOCKIN" | "RECOVER" | "SPRINT" | "STANDARD";
 
+function normalizeModeKey(raw: unknown): ModeKey | null {
+  if (typeof raw !== "string") return null;
+  const cleaned = raw.toUpperCase().replace(/[^A-Z]/g, "");
+  if (cleaned === "STANDARD") return "STANDARD";
+  if (cleaned === "LOCKIN") return "LOCKIN";
+  if (cleaned === "SPRINT") return "SPRINT";
+  if (cleaned === "RECOVER") return "RECOVER";
+  return null;
+}
+
 type PlanMode = {
   key: ModeKey;
   title: string;
@@ -174,8 +184,9 @@ export default function Plan() {
       });
 
     const baseReason = ((mode.data.reason ?? payload.reason) ?? "").slice(0, 400);
+    const recommended = normalizeModeKey(payload.recommended_mode);
     const reason =
-      payload.recommended_mode?.toUpperCase?.() === mode.key
+      recommended === mode.key
         ? baseReason
         : `Selected ${modeTitle(mode.key)}. Recommended: ${payload.recommended_mode}. ${baseReason}`.slice(
             0,
@@ -213,19 +224,10 @@ export default function Plan() {
     ];
   }, [query.data]);
 
-  const recommendedKey = React.useMemo<ModeKey | null>(() => {
-    const raw = query.data?.recommended_mode;
-    const k = (raw ?? "").toUpperCase();
-    if (
-      k === "STANDARD" ||
-      k === "LOCKIN" ||
-      k === "SPRINT" ||
-      k === "RECOVER"
-    ) {
-      return k;
-    }
-    return null;
-  }, [query.data?.recommended_mode]);
+  const recommendedKey = React.useMemo<ModeKey | null>(
+    () => normalizeModeKey(query.data?.recommended_mode),
+    [query.data?.recommended_mode],
+  );
 
   const orderedModes = React.useMemo(() => {
     if (!recommendedKey) return modes;
