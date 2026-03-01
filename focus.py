@@ -22,7 +22,9 @@ client = OpenAI()
 
 # updates user data to todays date and writes it to a json file called "user_data.json"
 tokens = get_tokens()
-metrics = get_bio_snapshot(**tokens) # gets all metrics in python dict
+metrics = get_bio_snapshot(
+    tokens.get("ourafy_access_token", None), tokens.get("ourafy_refresh_token", None)
+)  # gets all metrics in python dict
 scores = compute_all_metrics(metrics)
 
 STATIC_RULES = {
@@ -49,8 +51,9 @@ JSON_STRUCTURE = [
                     {"name": "song_name", "artist": "artist_name"},
                     {"name": "song_name", "artist": "artist_name"},
                     {"name": "song_name", "artist": "artist_name"},
-                    {"name": "song_name", "artist": "artist_name"}
+                    {"name": "song_name", "artist": "artist_name"},
                 ],
+                "playlist_title": "playlist_title",
             },
             "standard": {
                 "suitability_score": "score",
@@ -67,8 +70,9 @@ JSON_STRUCTURE = [
                     {"name": "song_name", "artist": "artist_name"},
                     {"name": "song_name", "artist": "artist_name"},
                     {"name": "song_name", "artist": "artist_name"},
-                    {"name": "song_name", "artist": "artist_name"}
+                    {"name": "song_name", "artist": "artist_name"},
                 ],
+                "playlist_title": "playlist_title",
             },
             "sprint": {
                 "suitability_score": "score",
@@ -85,8 +89,9 @@ JSON_STRUCTURE = [
                     {"name": "song_name", "artist": "artist_name"},
                     {"name": "song_name", "artist": "artist_name"},
                     {"name": "song_name", "artist": "artist_name"},
-                    {"name": "song_name", "artist": "artist_name"}
+                    {"name": "song_name", "artist": "artist_name"},
                 ],
+                "playlist_title": "playlist_title",
             },
             "lockin": {
                 "suitability_score": "score",
@@ -103,13 +108,13 @@ JSON_STRUCTURE = [
                     {"name": "song_name", "artist": "artist_name"},
                     {"name": "song_name", "artist": "artist_name"},
                     {"name": "song_name", "artist": "artist_name"},
-                    {"name": "song_name", "artist": "artist_name"}
+                    {"name": "song_name", "artist": "artist_name"},
                 ],
-            }
+                "playlist_title": "playlist_title",
+            },
         },
         "recommended_mode": "mode",
-
-        "reason": "reason for this plan"
+        "reason": "reason for this plan",
     }
 ]
 
@@ -258,10 +263,10 @@ def main():
         "sleep_score": metrics["score"],
     }
     oura_scores = {
-        "composite_focus_capacity_score": scores['cfc'],
-        "neurocognitive_readiness_model_score": scores['nrm'],
-        "autonomic_balance_ratio_score": scores['abr'],
-        "lock_in_readiness_score": scores['lir'],
+        "composite_focus_capacity_score": scores["cfc"],
+        "neurocognitive_readiness_model_score": scores["nrm"],
+        "autonomic_balance_ratio_score": scores["abr"],
+        "lock_in_readiness_score": scores["lir"],
     }
     focus_configs = get_focus_configs(voice_text, oura_data, oura_scores)
     print(json.dumps(focus_configs, indent=2))

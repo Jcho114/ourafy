@@ -12,6 +12,7 @@ from close import kill_running_processes
 from flask_cors import CORS
 import subprocess
 import webbrowser
+import time
 
 """
 File for the wakeword daemon as well as refreshing auth tokens for Oura and Spotify
@@ -248,7 +249,7 @@ def create_playlist(access_token, playlist_title, songs):
 def run_porcupine_listener():
     print("Starting listener instance")
     porcupine = pvporcupine.create(
-        access_key=PORCUPINE_ACCESS_KEY, keywords=["porcupine"]
+        access_key=PORCUPINE_ACCESS_KEY, keyword_paths=["aura-fi_en_mac_v4_0_0.ppn"]
     )
     recorder = PvRecorder(frame_length=porcupine.frame_length)
     recorder.start()
@@ -259,6 +260,7 @@ def run_porcupine_listener():
             keyword_index = porcupine.process(audio_frame)
             if keyword_index == 0:
                 break
+        time.sleep(0.5)
         print("Keyword heard")
         webbrowser.open_new_tab("http://localhost:5173/")
     except Exception as e:
