@@ -1,6 +1,12 @@
 import os
 import json
 
+APP_WHITELIST = [
+    "Chrome",
+    "Google Chrome",
+    "Raycast",
+]
+
 DISTRACTIONS_LIST = [
     "Minecraft",
     "Roblox",
