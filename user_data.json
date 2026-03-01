@@ -1,0 +1,62 @@
+{
+    "readiness": {
+        "data": [
+            {
+                "id": "7995b68d-14b6-46bc-9bc0-bbc4f4f01472",
+                "contributors": {
+                    "activity_balance": 76,
+                    "body_temperature": 70,
+                    "hrv_balance": 80,
+                    "previous_day_activity": 76,
+                    "previous_night": 57,
+                    "recovery_index": 79,
+                    "resting_heart_rate": 40,
+                    "sleep_balance": 68,
+                    "sleep_regularity": 89
+                },
+                "day": "2026-03-01",
+                "score": 65,
+                "temperature_deviation": 0.42,
+                "temperature_trend_deviation": 0.11,
+                "timestamp": "2026-03-01T00:00:00.000+00:00"
+            }
+        ],
+        "next_token": null
+    },
+    "resilience": {
+        "data": [],
+        "next_token": null
+    },
+    "sleep": {
+        "data": [
+            {
+                "id": "11160b2c-6117-44f4-b074-361c1c6882af",
+                "contributors": {
+                    "deep_sleep": 84,
+                    "efficiency": 95,
+                    "latency": 94,
+                    "rem_sleep": 46,
+                    "restfulness": 83,
+                    "timing": 80,
+                    "total_sleep": 47
+                },
+                "day": "2026-03-01",
+                "score": 69,
+                "timestamp": "2026-03-01T00:00:00.000+00:00"
+            }
+        ],
+        "next_token": null
+    },
+    "stress": {
+        "data": [
+            {
+                "id": "ffe7a431-1fbb-4d53-8fa5-7e88840479b3",
+                "day": "2026-03-01",
+                "day_summary": null,
+                "recovery_high": 0,
+                "stress_high": 0
+            }
+        ],
+        "next_token": null
+    }
+}

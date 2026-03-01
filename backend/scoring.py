@@ -38,8 +38,8 @@ def calc_neurocognitive_red(metrics: dict) -> float:
 
 # Estimates the dominance of the sympathetic vs. parasympathetic nervous system
 def calc_autonomic_bal(metrics: dict) -> float:
-    abr_score = metrics['hrv_balance'] / metrics['resting_heart_rate']
-    return abr_score
+    raw_abr = metrics['hrv_balance'] / metrics['resting_heart_rate']
+    return round(min(1.0, raw_abr / 2.5), 2)
 
 # the core activation metric. this value determines if the environment triggers a "deep work" state.
 LOCKIN_WEIGHTS = {
@@ -74,10 +74,10 @@ def compute_all_metrics(metrics):
         abr_score = future_abr.result()
         lockin_score = future_lockin.result()
 
-    # print(f"composite focus capacity score: {focus_score}")
-    # print(f"neurocognitive readiness model score: {neuro_score}")
-    # print(f"autonomic balance ratio score: {abr_score}")
-    # print(f"lock in score: {lockin_score}")
+    print(f"composite focus capacity score: {focus_score}")
+    print(f"neurocognitive readiness model score: {neuro_score}")
+    print(f"autonomic balance ratio score: {abr_score}")
+    print(f"lock in score: {lockin_score}")
 
     return {"cfc": focus_score, "nrm": neuro_score, "abr": abr_score, "lir": lockin_score}
 

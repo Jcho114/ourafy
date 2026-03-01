@@ -3,6 +3,7 @@ import json
 from datetime import date
 import os
 from dotenv import load_dotenv
+from db import sync_oura_data
 
 load_dotenv()
 
@@ -174,4 +175,5 @@ def get_bio_snapshot(ourafy_access_token: str, ourafy_refresh_token: str):
 
 if __name__ == "__main__":
     tokens = get_tokens()
-    get_bio_snapshot(**tokens)
+    data = get_bio_snapshot(**tokens)
+    sync_oura_data('biometrics', data)
