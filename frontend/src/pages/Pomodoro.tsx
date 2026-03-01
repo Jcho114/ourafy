@@ -1,6 +1,7 @@
 import * as React from "react";
-import { ArrowLeft, SkipForward } from "lucide-react";
+import { ArrowLeft, Loader2, SkipForward } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
+import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +12,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { unlockAudio, playPhaseCue } from "@/features/audio/beeps";
 import { StepRail } from "@/components/lockin/StepRail";
 import { usePomodoroMachine } from "@/features/pomodoro/usePomodoroMachine";
@@ -46,6 +54,32 @@ function parseFocusFromSearch(search: string) {
   const raw = sp.get("focus");
   if (!raw) return "";
   return raw.slice(0, 150);
+}
+
+function parsePlaylistFromSearch(search: string) {
+  const sp = new URLSearchParams(search);
+  const raw = sp.get("playlist");
+  if (!raw) return "";
+  return raw.slice(0, 180);
+}
+
+function parseSetupTokenFromSearch(search: string) {
+  const sp = new URLSearchParams(search);
+  const raw = sp.get("setup");
+  if (!raw) return "";
+  return raw.slice(0, 120);
+}
+
+function openSetupStorageKey(token: string) {
+  return `ourafy.openSetup:${token}`;
+}
+
+function openSetupDoneKey(token: string) {
+  return `ourafy.openSetupDone:${token}`;
+}
+
+function playlistTipKey(playlist: string) {
+  return `ourafy.playlistTipDismissed:${playlist}`;
 }
 
 function parseExtrasFromSearch(search: string) {
@@ -95,6 +129,35 @@ export default function Pomodoro() {
     [location.search],
   );
 
+  const playlist = React.useMemo(
+    () => parsePlaylistFromSearch(location.search),
+    [location.search],
+  );
+
+  const setupToken = React.useMemo(
+    () => parseSetupTokenFromSearch(location.search),
+    [location.search],
+  );
+
+  const [isSettingUp, setIsSettingUp] = React.useState(() => Boolean(setupToken));
+  const setupStartedRef = React.useRef(false);
+
+  const [showPlaylistDialog, setShowPlaylistDialog] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!playlist || isSettingUp) {
+      setShowPlaylistDialog(false);
+      return;
+    }
+
+    try {
+      const seen = window.sessionStorage.getItem(playlistTipKey(playlist));
+      setShowPlaylistDialog(!seen);
+    } catch {
+      setShowPlaylistDialog(true);
+    }
+  }, [isSettingUp, playlist]);
+
   const extras = React.useMemo(
     () => parseExtrasFromSearch(location.search),
     [location.search],
@@ -122,20 +185,145 @@ export default function Pomodoro() {
 
   React.useEffect(() => {
     if (state.phase !== "done") return;
+
+    const apps = extras.apps ?? [];
+    if (apps.length) {
+      void axios
+        .post("http://localhost:8000/close", null, {
+          params: { apps: apps.join(",") },
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+    }
+
     toast.success("Done.");
     const id = window.setTimeout(() => {
       navigate("/");
     }, 900);
     return () => window.clearTimeout(id);
-  }, [navigate, state.phase]);
+  }, [extras.apps, navigate, state.phase]);
 
   React.useEffect(() => {
+    if (!setupToken) {
+      setIsSettingUp(false);
+      return;
+    }
+
+    if (setupStartedRef.current) return;
+    setupStartedRef.current = true;
+
+    try {
+      const done = window.sessionStorage.getItem(openSetupDoneKey(setupToken));
+      if (done) {
+        setIsSettingUp(false);
+        return;
+      }
+    } catch {
+      // ignore
+    }
+
+    let raw = "";
+    try {
+      raw = window.sessionStorage.getItem(openSetupStorageKey(setupToken)) ?? "";
+    } catch {
+      raw = "";
+    }
+
+    if (!raw) {
+      setIsSettingUp(false);
+      return;
+    }
+
+    let body: unknown = null;
+    try {
+      body = JSON.parse(raw);
+    } catch {
+      body = null;
+    }
+
+    if (!body || typeof body !== "object") {
+      setIsSettingUp(false);
+      return;
+    }
+
+    setIsSettingUp(true);
+
+    void axios
+      .post("http://localhost:8000/open", body)
+      .then(() => {
+        try {
+          window.sessionStorage.setItem(openSetupDoneKey(setupToken), "1");
+          window.sessionStorage.removeItem(openSetupStorageKey(setupToken));
+        } catch {
+          // ignore
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        toast.error("Couldn't set up environment.");
+      })
+      .finally(() => {
+        setIsSettingUp(false);
+      });
+  }, [setupToken]);
+
+  React.useEffect(() => {
+    if (isSettingUp) return;
     if (state.phase !== "idle" || state.status !== "stopped") return;
     controls.start();
-  }, [controls, state.phase, state.status]);
+  }, [controls, isSettingUp, state.phase, state.status]);
 
   return (
     <div className="min-h-screen w-full cyber-bg">
+      {isSettingUp ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/35 backdrop-blur-sm">
+          <div className="w-full max-w-md mx-auto rounded-2xl border border-border/60 bg-card/50 p-6 text-center shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_24px_90px_rgba(0,0,0,0.55)]">
+            <div className="mx-auto flex size-14 items-center justify-center rounded-2xl border border-border/60 bg-background/25">
+              <Loader2 className="size-7 animate-spin text-muted-foreground" />
+            </div>
+            <div className="mt-5 text-xs tracking-[0.28em] text-muted-foreground">
+              SETTING UP ENVIRONMENT
+            </div>
+            <div className="mt-2 text-sm text-foreground/85">
+              Opening apps and getting Spotify ready…
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <Dialog
+        open={showPlaylistDialog}
+        onOpenChange={(open) => {
+          setShowPlaylistDialog(open);
+          if (!open && playlist) {
+            try {
+              window.sessionStorage.setItem(playlistTipKey(playlist), "1");
+            } catch {
+              // ignore
+            }
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Spotify playlist</DialogTitle>
+            <DialogDescription>
+              When Spotify opens, select this playlist to start the session.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-xl border border-border/60 bg-background/35 p-4">
+            <div className="text-xs tracking-[0.28em] text-muted-foreground">
+              PICK THIS PLAYLIST
+            </div>
+            <div className="mt-2 font-mono text-sm break-words">{playlist}</div>
+            <div className="mt-2 text-xs text-muted-foreground">
+              Close this dialog with the X when you’re set.
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="mx-auto w-full max-w-6xl px-4 pt-14 pb-14">
         <StepRail
           className="mb-6 -mx-2"
@@ -238,12 +426,27 @@ export default function Pomodoro() {
                     controls.skip();
                   }}
                   className="border-border/60 bg-background/40 backdrop-blur"
-                  disabled={state.phase === "idle" || state.phase === "done"}
+                  disabled={
+                    isSettingUp ||
+                    state.phase === "idle" ||
+                    state.phase === "done"
+                  }
                 >
                   <SkipForward className="size-4" />
                   Skip
                 </Button>
               </div>
+
+              {playlist && !isSettingUp ? (
+                <div className="rounded-xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-50/90 shadow-[0_0_0_1px_rgba(16,185,129,0.08)]">
+                  <div className="text-[10px] tracking-[0.28em] text-emerald-100/70">
+                    SPOTIFY
+                  </div>
+                  <div className="mt-1">
+                    Pick playlist: <span className="font-mono">{playlist}</span>
+                  </div>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </div>

@@ -2,7 +2,7 @@ import * as React from "react";
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
 import axios from "axios";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -117,15 +117,29 @@ type PlanMode = {
   data: PomodoroOption;
 };
 
-type OpenResponse = {
-  url: string;
-};
-
 type OpenRequestBody = {
   playlist_title: string;
   songs: Array<{ artist: string; track: string }>;
   apps_to_open: string[];
 };
+
+function appsWithSpotifyLast(apps: string[]) {
+  const cleaned = (apps ?? []).filter(Boolean);
+  const withoutSpotify = cleaned.filter((a) => a.toLowerCase() !== "spotify");
+  return [...withoutSpotify, "Spotify"];
+}
+
+function createSetupToken() {
+  try {
+    return window.crypto.randomUUID();
+  } catch {
+    return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+}
+
+function setupStorageKey(token: string) {
+  return `ourafy.openSetup:${token}`;
+}
 
 function readParams(search: string) {
   const sp = new URLSearchParams(search);
@@ -196,17 +210,6 @@ export default function Plan() {
     staleTime: 60_000,
   });
 
-  const openPlaylist = useMutation({
-    mutationKey: ["open-playlist"],
-    mutationFn: async (body: OpenRequestBody) => {
-      const res = await axios.post<OpenResponse>(
-        "http://localhost:8000/open",
-        body,
-      );
-      return res.data;
-    },
-  });
-
   function choose(mode: PlanMode, payload: OptionsResponse) {
     unlockAudio();
 
@@ -216,29 +219,15 @@ export default function Plan() {
         artist: s.artist,
         track: s.name,
       })),
-      apps_to_open: payload.apps_to_open ?? [],
+      apps_to_open: appsWithSpotifyLast(payload.apps_to_open ?? []),
     };
 
-    void openPlaylist
-      .mutateAsync(openBody)
-      .then((payload) => {
-        const url = payload?.url;
-        if (!url || typeof url !== "string") {
-          toast.error("Couldn't open Spotify playlist.");
-          return;
-        }
-
-        const w = window.open(url, "_blank");
-        if (w) {
-          w.opener = null;
-        } else {
-          toast.message("Popup blocked. Allow popups to open Spotify.");
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        toast.error("Couldn't open Spotify playlist.");
-      });
+    const setupToken = createSetupToken();
+    try {
+      window.sessionStorage.setItem(setupStorageKey(setupToken), JSON.stringify(openBody));
+    } catch {
+      // ignore
+    }
 
     const baseReason = ((mode.data.reason ?? payload.reason) ?? "").slice(0, 400);
     const recommended = normalizeModeKey(payload.recommended_mode);
@@ -256,8 +245,10 @@ export default function Plan() {
       cycles: String(mode.data.cycles),
       focus: params.focus,
       blockers: params.blockers,
-      apps: (payload.apps_to_open ?? []).join(","),
+      apps: openBody.apps_to_open.join(","),
       reason,
+      playlist: String(mode.data.playlist_title ?? "").slice(0, 180),
+      setup: setupToken,
       ...(params.coach ? { coach: params.coach } : {}),
     });
     navigate(`/pomodoro?${q.toString()}`);

@@ -25,6 +25,7 @@ APP_OPEN_MAP = {
     "Obsidian": "Obsidian",
     "Slack": "Slack",
     "Figma": "Figma",
+    "Spotify": "Spotify",
 }
 
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
