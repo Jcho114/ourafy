@@ -171,6 +171,7 @@ def get_bio_snapshot(ourafy_access_token: str, ourafy_refresh_token: str):
 
     return {**readiness, **sleep, **stress}
 
+
 if __name__ == "__main__":
     tokens = get_tokens()
     get_bio_snapshot(**tokens)
