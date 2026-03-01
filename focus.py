@@ -44,6 +44,7 @@ JSON_STRUCTURE = [
                     {"name": "song_name", "artist": "artist_name"},
                 ],
                 "playlist_title": "playlist_title",
+                "reason": "reason for this plan",
             },
             "standard": {
                 "suitability_score": "score",
@@ -63,6 +64,7 @@ JSON_STRUCTURE = [
                     {"name": "song_name", "artist": "artist_name"},
                 ],
                 "playlist_title": "playlist_title",
+                "reason": "reason for this plan",
             },
             "sprint": {
                 "suitability_score": "score",
@@ -82,6 +84,7 @@ JSON_STRUCTURE = [
                     {"name": "song_name", "artist": "artist_name"},
                 ],
                 "playlist_title": "playlist_title",
+                "reason": "reason for this plan",
             },
             "lockin": {
                 "suitability_score": "score",
@@ -101,10 +104,10 @@ JSON_STRUCTURE = [
                     {"name": "song_name", "artist": "artist_name"},
                 ],
                 "playlist_title": "playlist_title",
+                "reason": "reason for this plan",
             },
         },
         "recommended_mode": "mode",
-        "reason": "reason for this plan",
     }
 ]
 

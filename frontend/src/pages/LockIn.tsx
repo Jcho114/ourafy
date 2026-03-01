@@ -1,6 +1,7 @@
 import * as React from "react";
 import { ArrowRight } from "lucide-react";
 import { useNavigate, useLocation } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StepRail } from "@/components/lockin/StepRail";
+import { getOuraSnapshot } from "@/api/ouraSnapshot";
 
 const MAX_FOCUS_CHARS = 150;
 
@@ -26,6 +28,7 @@ function readQueryFocus(search: string) {
 export default function LockIn() {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const [focus, setFocus] = React.useState(() =>
     readQueryFocus(location.search),
   );
@@ -34,6 +37,14 @@ export default function LockIn() {
   React.useEffect(() => {
     window.setTimeout(() => inputRef.current?.focus(), 50);
   }, []);
+
+  React.useEffect(() => {
+    void queryClient.prefetchQuery({
+      queryKey: ["oura-snapshot"],
+      queryFn: () => getOuraSnapshot(),
+      staleTime: 60_000,
+    });
+  }, [queryClient]);
 
   function next() {
     const trimmed = focus.trim();

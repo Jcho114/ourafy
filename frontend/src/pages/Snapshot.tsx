@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BioSnapshot } from "@/components/oura/BioSnapshot";
+import { BioSnapshot, BioSnapshotSkeleton } from "@/components/oura/BioSnapshot";
 import { getOuraSnapshot } from "@/api/ouraSnapshot";
 import { StepRail } from "@/components/lockin/StepRail";
 
@@ -132,6 +132,8 @@ export default function Snapshot() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_0.95fr]">
           {snapshot.data ? (
             <BioSnapshot data={snapshot.data} />
+          ) : snapshot.isLoading ? (
+            <BioSnapshotSkeleton />
           ) : (
             <BioSnapshot data={{}} />
           )}

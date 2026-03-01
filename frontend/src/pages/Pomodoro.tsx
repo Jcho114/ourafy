@@ -59,7 +59,11 @@ function parseExtrasFromSearch(search: string) {
         .filter(Boolean)
         .slice(0, 8)
     : [];
-  const reason = (sp.get("reason") ?? "").slice(0, 400);
+  const rawReason = (sp.get("reason") ?? "").slice(0, 400);
+  const reason = rawReason
+    .replace(/\s*Recommended:\s*[^.]*\.?\s*/gi, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
   return { blockers, apps, reason };
 }
 

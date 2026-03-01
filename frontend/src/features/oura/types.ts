@@ -18,9 +18,16 @@ export type StressEntry = {
   stress_high?: number;
 };
 
+export type ResilienceEntry = {
+  abr?: number;
+  cfc?: number;
+  lir?: number;
+  nrm?: number;
+};
+
 export type OuraSnapshotResponse = {
   readiness?: { data?: ReadonlyArray<ReadinessEntry>; next_token?: string | null };
-  resilience?: { data?: ReadonlyArray<unknown>; next_token?: string | null };
+  resilience?: { data?: ReadonlyArray<ResilienceEntry>; next_token?: string | null };
   sleep?: { data?: ReadonlyArray<SleepEntry>; next_token?: string | null };
   stress?: { data?: ReadonlyArray<StressEntry>; next_token?: string | null };
 };

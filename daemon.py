@@ -139,9 +139,11 @@ def get_tokens() -> dict:
 def oura_data():
     tokens = get_tokens()
     oura_data = get_bio_snapshot(
-        tokens["ourafy_access_token"], tokens["ourafy_refresh_token"]
+        tokens.get("ourafy_access_token", None),
+        tokens.get("ourafy_refresh_token", None),
     )
-    return oura_data
+    scores = compute_all_metrics(oura_data)
+    return oura_data | scores
 
 
 @app.route("/spotify")

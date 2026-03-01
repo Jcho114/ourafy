@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { unlockAudio } from "@/features/audio/beeps";
 import { StepRail } from "@/components/lockin/StepRail";
 
@@ -27,6 +28,7 @@ type PomodoroOption = {
   playlist_title: string;
   songs: OptionSong[];
   suitability_score?: string | number;
+  reason?: string;
 };
 
 type OptionsResponse = {
@@ -171,7 +173,7 @@ export default function Plan() {
         toast.error("Couldn't open Spotify playlist.");
       });
 
-    const baseReason = (payload.reason ?? "").slice(0, 400);
+    const baseReason = ((mode.data.reason ?? payload.reason) ?? "").slice(0, 400);
     const reason =
       payload.recommended_mode?.toUpperCase?.() === mode.key
         ? baseReason
@@ -225,6 +227,13 @@ export default function Plan() {
     return null;
   }, [query.data?.recommended_mode]);
 
+  const orderedModes = React.useMemo(() => {
+    if (!recommendedKey) return modes;
+    const idx = modes.findIndex((m) => m.key === recommendedKey);
+    if (idx <= 0) return modes;
+    return [modes[idx], ...modes.slice(0, idx), ...modes.slice(idx + 1)];
+  }, [modes, recommendedKey]);
+
   return (
     <div className="min-h-screen w-full cyber-bg">
       <div className="mx-auto w-full max-w-6xl px-4 pt-14 pb-14">
@@ -276,16 +285,51 @@ export default function Plan() {
 
         <div className="grid grid-cols-1 gap-4">
           {query.isLoading ? (
-            <Card className="border-border/60 bg-card/40 backdrop-blur">
-              <CardHeader>
-                <CardTitle className="tracking-wide">
-                  Loading options…
-                </CardTitle>
-                <CardDescription>
-                  Contacting http://localhost:8000/options
-                </CardDescription>
-              </CardHeader>
-            </Card>
+            <>
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <Card
+                  key={idx}
+                  className="border-border/60 bg-card/40 backdrop-blur"
+                >
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between gap-3">
+                      <Skeleton className="h-5 w-36" />
+                      <Skeleton className="h-6 w-28" />
+                    </CardTitle>
+                    <CardDescription className="flex items-center gap-2">
+                      <Skeleton className="h-4 w-40" />
+                      <Skeleton className="h-4 w-24" />
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="rounded-xl border border-border/60 bg-background/35 p-4">
+                      <Skeleton className="h-3 w-20" />
+                      <div className="mt-3 space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-[92%]" />
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-border/60 bg-background/35 p-4">
+                      <Skeleton className="h-3 w-24" />
+                      <div className="mt-3 space-y-2">
+                        {Array.from({ length: 4 }).map((_, lineIdx) => (
+                          <div
+                            key={lineIdx}
+                            className="flex items-baseline justify-between gap-3"
+                          >
+                            <Skeleton className="h-4 w-52" />
+                            <Skeleton className="h-3 w-16" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <Skeleton className="h-9 w-28" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </>
           ) : null}
 
           {query.isError ? (
@@ -301,12 +345,13 @@ export default function Plan() {
             </Card>
           ) : null}
 
-          {modes.map((m) => {
+          {orderedModes.map((m) => {
             const payload = query.data;
             if (!payload) return null;
             const isRecommended = recommendedKey === m.key;
             const songs = m.data.songs ?? [];
             const visibleSongs = songs.slice(0, 5);
+            const reason = (m.data.reason ?? "").trim().slice(0, 420);
             return (
               <Card
                 key={m.key}
@@ -316,8 +361,8 @@ export default function Plan() {
                   <CardTitle className="flex items-center justify-between gap-3">
                     <span className="tracking-wide">
                       {m.title}
-                      {isRecommended ? (
-                        <span className="ml-2 rounded-md border border-border/60 bg-background/30 px-2 py-1 text-[10px] font-mono align-middle">
+                       {isRecommended ? (
+                        <span className="ml-2 rounded-md border border-emerald-400/60 bg-emerald-500/15 px-2 py-1 text-[10px] font-mono text-emerald-100 align-middle shadow-[0_0_0_1px_rgba(16,185,129,0.12),0_0_18px_rgba(16,185,129,0.18)]">
                           RECOMMENDED
                         </span>
                       ) : null}
@@ -334,6 +379,16 @@ export default function Plan() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {reason ? (
+                    <div className="rounded-xl border border-border/60 bg-background/35 p-4">
+                      <div className="text-xs tracking-[0.28em] text-muted-foreground">
+                        WHY THIS
+                      </div>
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        {reason}
+                      </div>
+                    </div>
+                  ) : null}
                   {visibleSongs.length ? (
                     <div className="rounded-xl border border-border/60 bg-background/35 p-4">
                       <div className="text-xs tracking-[0.28em] text-muted-foreground">
