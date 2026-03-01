@@ -1,5 +1,6 @@
-import numpy
-from check import get_bio_snapshot
+from check import get_bio_snapshot, get_tokens
+from concurrent.futures import ThreadPoolExecutor
+
 
 """
 {'score': 74, 'activity_balance': 68, 'body_temperature': 92, 'hrv_balance': 91, 'recovery_index': 23, 'resting_heart_rate': 100, 'sleep_balance': 73, 'sleep_regularity': 90, 'deep_sleep': 95, 'efficiency': 90, 'latency': 67, 'rem_sleep': 47, 'restfulness': 86, 'timing': 100, 'total_sleep': 59, 'day_summary': 'stressful', 'stress_high': 12600}
@@ -61,15 +62,28 @@ def calc_lock_in(metrics: dict) -> float:
 
     return round(li_score / 100, 2)
 
+def compute_all_metrics(metrics):
+    with ThreadPoolExecutor() as executor:
+        future_focus = executor.submit(calc_focus_capacity, metrics)
+        future_neuro = executor.submit(calc_neurocognitive_red, metrics)
+        future_abr = executor.submit(calc_autonomic_bal, metrics)
+        future_lockin = executor.submit(calc_lock_in, metrics)
+
+        focus_score = future_focus.result()
+        neuro_score = future_neuro.result()
+        abr_score = future_abr.result()
+        lockin_score = future_lockin.result()
+
+    print(f"composite focus capacity score: {focus_score}")
+    print(f"neurocognitive readiness model score: {neuro_score}")
+    print(f"autonomic balance ratio score: {abr_score}")
+    print(f"lock in score: {lockin_score}")
 
 
 def main():
-    metrics = get_bio_snapshot()
-    print(f"composite focus capacity score: {calc_focus_capacity(metrics)}")
-    print(f"neurocognitive readiness model score: {calc_neurocognitive_red(metrics)}")
-    print(f"autonomic balance ratio score: {calc_autonomic_bal(metrics)}")
-    print(f"lock in score: {calc_lock_in(metrics)}")
-    # print(metrics)
+    tokens = get_tokens()
+    metrics = get_bio_snapshot(**tokens)
+    compute_all_metrics(metrics)
 
 if __name__ == "__main__":
     main()
