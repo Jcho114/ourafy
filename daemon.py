@@ -5,12 +5,12 @@ import pvporcupine
 from flask import Flask, redirect, request
 from dotenv import load_dotenv
 from pvrecorder import PvRecorder
-import webbrowser
 import json
 from urllib.parse import urlencode
 from check import get_bio_snapshot
 from close import kill_running_processes
 from flask_cors import CORS
+import subprocess
 
 """
 File for the wakeword daemon as well as refreshing auth tokens for Oura and Spotify
@@ -165,6 +165,11 @@ def app_close():
         kill_running_processes(app)
 
 
+APP_OPEN_MAP = {
+    "VSCode": "Visual Studio Code",
+}
+
+
 @app.route("/open", methods=["POST"])
 def app_open():
     """
@@ -180,6 +185,21 @@ def app_open():
         tokens["spotify_access_token"], data["playlist_title"], data["songs"]
     )
 
+    def open_requested_apps(apps: list[str]):
+        for app in apps:
+            if app not in APP_OPEN_MAP:
+                print(f"app {app} does not have an open mapping")
+                continue
+
+            print(f"opening app {app}")
+            exit_code = subprocess.call(["/usr/bin/open", "-a", APP_OPEN_MAP[app]])
+            if exit_code != 0:
+                print(f"subprocess failed with exit code {exit_code}")
+            else:
+                print("app opened successfully")
+
+    open_requested_apps(data["apps_to_open"])
+
     def spotify_uri_to_url(uri: str) -> str:
         parts = uri.split(":")
         return f"https://open.spotify.com/{parts[1]}/{parts[2]}"
@@ -189,7 +209,7 @@ def app_open():
     }
 
 
-def create_playlist(access_token, song_title, song_names):
+def create_playlist(access_token, playlist_title, songs):
     """
     Recieves a songlist (from AI) and adds them to a playlist.
     Requires an active spotify session.
@@ -197,8 +217,8 @@ def create_playlist(access_token, song_title, song_names):
     headers = {"Authorization": f"Bearer {access_token}"}
     track_uris = []
 
-    for name in song_names:
-        search_url = f"https://api.spotify.com/v1//search?q={name}&type=track&limit=1"
+    for song in songs:
+        search_url = f"https://api.spotify.com/v1//search?q=track:{song['track']} artist:{song['artist']}&type=track&limit=1"
         res = requests.get(search_url, headers=headers).json()
         items = res.get("tracks", {}).get("items", [])
         if items:
@@ -210,7 +230,7 @@ def create_playlist(access_token, song_title, song_names):
     playlist = requests.post(
         "https://api.spotify.com/v1/me/playlists",
         headers=headers,
-        json={"name": song_title, "public": False},
+        json={"name": playlist_title, "public": False},
     ).json()
     playlist_id = playlist["id"]
     playlist_uri = playlist["uri"]
