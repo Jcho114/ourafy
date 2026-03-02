@@ -75,13 +75,14 @@ function readStoredCoach() {
 function coachDisplayName(id: string) {
   if (id === "jasonchen") return "Jason Chen";
   if (id === "heisenberg") return "Heisenberg";
-  return id
-    .replace(/[_-]+/g, " ")
-    .replace(/\b\w/g, (m) => m.toUpperCase());
+  return id.replace(/[_-]+/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
 }
 
 function coachSubtitle(id: string) {
   if (id === "jasonchen") return "Calm, practical, steady momentum";
+  if (id === "peter") return "Analytical, systems-first, ruthless clarity";
+  if (id === "lauren") return "Warm, encouraging, confidence builder";
+  if (id === "charles") return "Clear, structured, fast start";
   if (id === "heisenberg") return "High intensity, no excuses";
   return "Lifestyle coach";
 }
@@ -146,15 +147,9 @@ export default function LockIn() {
     return both;
   }, []);
 
-  const headshots = React.useMemo(
-    () => coachAssetsFromGlob(HEADSHOT_URLS),
-    [],
-  );
+  const headshots = React.useMemo(() => coachAssetsFromGlob(HEADSHOT_URLS), []);
 
-  const tryits = React.useMemo(
-    () => coachAssetsFromGlob(TRYIT_URLS),
-    [],
-  );
+  const tryits = React.useMemo(() => coachAssetsFromGlob(TRYIT_URLS), []);
 
   const coachFromQuery = React.useMemo(
     () => readQueryCoach(location.search),

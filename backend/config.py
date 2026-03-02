@@ -33,6 +33,10 @@ APP_OPEN_MAP = {
     "Slack": "Slack",
     "Figma": "Figma",
     "Spotify": "Spotify",
+    "Discord": "Discord",
+    "Instagram": "Instagram",
+    "Messages": "Messages",
+    "Minecraft": "Minecraft",
 }
 
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")

@@ -129,6 +129,13 @@ function appsWithSpotifyLast(apps: string[]) {
   return [...withoutSpotify, "Spotify"];
 }
 
+function displayAppName(app: string) {
+  const a = String(app ?? "").trim();
+  if (!a) return "";
+  if (a.toLowerCase() === "vscode") return "VS Code";
+  return a;
+}
+
 function createSetupToken() {
   try {
     return window.crypto.randomUUID();
@@ -224,12 +231,15 @@ export default function Plan() {
 
     const setupToken = createSetupToken();
     try {
-      window.sessionStorage.setItem(setupStorageKey(setupToken), JSON.stringify(openBody));
+      window.sessionStorage.setItem(
+        setupStorageKey(setupToken),
+        JSON.stringify(openBody),
+      );
     } catch {
       // ignore
     }
 
-    const baseReason = ((mode.data.reason ?? payload.reason) ?? "").slice(0, 400);
+    const baseReason = (mode.data.reason ?? payload.reason ?? "").slice(0, 400);
     const recommended = normalizeModeKey(payload.recommended_mode);
     const reason =
       recommended === mode.key
@@ -366,6 +376,8 @@ export default function Plan() {
             const songs = m.data.songs ?? [];
             const visibleSongs = songs.slice(0, 5);
             const reason = (m.data.reason ?? "").trim().slice(0, 420);
+            const appsToOpen = appsWithSpotifyLast(payload.apps_to_open ?? []);
+            const visibleApps = appsToOpen.slice(0, 4);
             return (
               <Card
                 key={m.key}
@@ -375,7 +387,7 @@ export default function Plan() {
                   <CardTitle className="flex items-center justify-between gap-3">
                     <span className="tracking-wide">
                       {m.title}
-                       {isRecommended ? (
+                      {isRecommended ? (
                         <span className="ml-2 rounded-md border border-emerald-400/60 bg-emerald-500/15 px-2 py-1 text-[10px] font-mono text-emerald-100 align-middle shadow-[0_0_0_1px_rgba(16,185,129,0.12),0_0_18px_rgba(16,185,129,0.18)]">
                           RECOMMENDED
                         </span>
@@ -400,6 +412,31 @@ export default function Plan() {
                       </div>
                       <div className="mt-2 text-sm text-muted-foreground">
                         {reason}
+                      </div>
+                    </div>
+                  ) : null}
+                  {appsToOpen.length ? (
+                    <div className="rounded-xl border border-border/60 bg-background/35 p-4">
+                      <div className="text-xs tracking-[0.28em] text-muted-foreground">
+                        APPS TO OPEN
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        {visibleApps
+                          .map(displayAppName)
+                          .filter(Boolean)
+                          .map((a, idx) => (
+                            <span
+                              key={`${a}-${idx}`}
+                              className="rounded-full border border-border/60 bg-background/30 px-3 py-1 text-xs font-mono"
+                            >
+                              {a}
+                            </span>
+                          ))}
+                        {appsToOpen.length > visibleApps.length ? (
+                          <span className="text-xs text-muted-foreground">
+                            +{appsToOpen.length - visibleApps.length} more
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                   ) : null}

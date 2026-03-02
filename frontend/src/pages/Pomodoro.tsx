@@ -186,12 +186,12 @@ export default function Pomodoro() {
   React.useEffect(() => {
     if (state.phase !== "done") return;
 
-    const apps = extras.apps ?? [];
+    const apps = (extras.apps ?? []).filter(
+      (a): a is string => typeof a === "string" && Boolean(a.trim()),
+    );
     if (apps.length) {
       void axios
-        .post("http://localhost:8000/close", null, {
-          params: { apps: apps.join(",") },
-        })
+        .post("http://localhost:8000/close", { apps })
         .catch((err) => {
           console.error(err);
         });

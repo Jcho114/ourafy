@@ -195,8 +195,10 @@ def app_close():
     param data:
     - apps str[]: list of apps to close
     """
-    apps = request.args.get("apps")
+    data = request.get_json()
+    apps = data["apps"]
     kill_running_processes(apps)
+    return {"message": "closed successfully"}
 
 
 @app.route("/open", methods=["POST"])
@@ -223,6 +225,8 @@ def app_open():
                 print(f"app {app} does not have an open mapping")
                 continue
 
+            if app == "Spotify":
+                time.sleep(2)
             print(f"opening app {app}")
             exit_code = subprocess.call(["/usr/bin/open", "-a", APP_OPEN_MAP[app]])
             if exit_code != 0:

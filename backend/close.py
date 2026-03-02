@@ -1,7 +1,7 @@
 import os
 import signal
 import subprocess
-from config import DISTRACTIONS_LIST, APP_WHITELIST
+from config import DISTRACTIONS_LIST, APP_WHITELIST, APP_OPEN_MAP
 
 
 def kill_running_processes(list=DISTRACTIONS_LIST):
@@ -21,7 +21,9 @@ def kill_running_processes(list=DISTRACTIONS_LIST):
             for app in list:
                 if app in APP_WHITELIST:
                     continue
-                if app in cmd:
+                if app not in APP_OPEN_MAP:
+                    continue
+                if APP_OPEN_MAP[app] in cmd:
                     print(f"Found distraction '{app}' running (PID {pid}). Killing...")
                     try:
                         os.kill(pid, signal.SIGKILL)
